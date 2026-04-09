@@ -13,6 +13,7 @@ stats_analyzer.py - 统计分析引擎
   - 冷淡回复: "嗯" "哦" "好" 等单字/敷衍
   - 晚安分析: 谁先说晚安
   - 活跃时段分布
+  - 语言学特征: 代词、模糊词、条件句、情绪词、撤回消息
 """
 import argparse
 import json
@@ -36,6 +37,19 @@ GOODMORNING_WORDS = {"早安", "早上好", "早啊", "早哦", "good morning", 
 
 # 对话间隔阈值（秒）: 超过此时间视为新对话开始
 NEW_CONVERSATION_GAP = 3 * 3600  # 3小时
+
+# 语言学词库
+HEDGING_WORDS = ["也许", "可能", "感觉", "好像", "大概", "应该", "似乎", "觉得", "不确定", "说不定"]
+CONDITIONAL_MARKERS = ["如果", "要是", "假如", "万一", "要不然", "若是", "倘若"]
+POSITIVE_EMOTION_WORDS = [
+    "开心", "高兴", "快乐", "幸福", "爱", "喜欢", "想你", "好想", "哈哈", "嘻嘻",
+    "棒", "好棒", "厉害", "可爱", "美", "帅", "甜", "暖", "温柔", "期待",
+    "谢谢", "感谢", "宝贝", "亲爱", "老公", "老婆", "宝宝"
+]
+NEGATIVE_EMOTION_WORDS = [
+    "烦", "累", "难过", "伤心", "痛苦", "委屈", "生气", "愤怒", "失望", "绝望",
+    "算了", "无所谓", "随便", "不想", "放弃", "好累", "心累", "难受", "伤", "哭"
+]
 
 
 def load_messages(path):
@@ -197,6 +211,77 @@ def detect_goodnight(text_messages):
                 their_goodnight += 1
 
     return {"my_goodnight": my_goodnight, "their_goodnight": their_goodnight}
+
+
+def analyze_linguistics(text_messages, all_messages):
+    """分析语言学特征：代词、模糊词、条件句、情绪词、撤回消息"""
+    my_we = 0
+    their_we = 0
+    my_i = 0
+    their_i = 0
+    my_hedging = 0
+    their_hedging = 0
+    my_conditional = 0
+    their_conditional = 0
+    my_positive = 0
+    their_positive = 0
+    my_negative = 0
+    their_negative = 0
+
+    for msg in text_messages:
+        content = msg["content"]
+        sender = msg["sender"]
+
+        # 代词统计
+        we_count = content.count("我们") + content.count("咱们") + content.count("咱")
+        i_count = content.count("我") - we_count * 2  # 排除"我们"中的"我"
+        i_count = max(i_count, 0)
+
+        # 模糊词统计
+        hedging_count = sum(1 for w in HEDGING_WORDS if w in content)
+
+        # 条件句统计
+        conditional_count = sum(1 for w in CONDITIONAL_MARKERS if w in content)
+
+        # 情绪词统计
+        pos_count = sum(1 for w in POSITIVE_EMOTION_WORDS if w in content)
+        neg_count = sum(1 for w in NEGATIVE_EMOTION_WORDS if w in content)
+
+        if sender == "me":
+            my_we += we_count
+            my_i += i_count
+            my_hedging += hedging_count
+            my_conditional += conditional_count
+            my_positive += pos_count
+            my_negative += neg_count
+        else:
+            their_we += we_count
+            their_i += i_count
+            their_hedging += hedging_count
+            their_conditional += conditional_count
+            their_positive += pos_count
+            their_negative += neg_count
+
+    # 撤回消息统计
+    my_revoke = sum(1 for m in all_messages if m["sender"] == "me" and m["type"] == "revoke")
+    their_revoke = sum(1 for m in all_messages if m["sender"] == "them" and m["type"] == "revoke")
+
+    # 计算情绪正向比率（正向词 / 总情绪词）
+    my_total_emotion = my_positive + my_negative
+    their_total_emotion = their_positive + their_negative
+    my_pos_ratio = round(my_positive / my_total_emotion, 3) if my_total_emotion > 0 else 0.5
+    their_pos_ratio = round(their_positive / their_total_emotion, 3) if their_total_emotion > 0 else 0.5
+
+    return {
+        "pronoun_we_count": {"me": my_we, "them": their_we},
+        "pronoun_i_count": {"me": my_i, "them": their_i},
+        "hedging_words_count": {"me": my_hedging, "them": their_hedging},
+        "conditional_count": {"me": my_conditional, "them": their_conditional},
+        "positive_emotion_count": {"me": my_positive, "them": their_positive},
+        "negative_emotion_count": {"me": my_negative, "them": their_negative},
+        "positive_emotion_ratio": {"me": my_pos_ratio, "them": their_pos_ratio},
+        "revoke_count": {"me": my_revoke, "them": their_revoke},
+    }
 
 
 def compute_scores(stats):
@@ -362,6 +447,9 @@ def main():
     # 晚安
     goodnight = detect_goodnight(text_msgs)
 
+    # 语言学特征
+    linguistics = analyze_linguistics(text_msgs, valid)
+
     # 活跃时段
     active_hours = defaultdict(int)
     for m in valid:
@@ -416,6 +504,7 @@ def main():
         "active_hours": dict(active_hours),
         "daily_trend": daily_trend,
         "message_types": {k: dict(v) for k, v in type_counts.items()},
+        "linguistic": linguistics,
     }
 
     stats["scores"] = compute_scores(stats)

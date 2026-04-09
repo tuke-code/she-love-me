@@ -189,8 +189,34 @@ def render_strategist(strategist):
     starts  = strategist.get("start_doing", [])
     roadmap = escape_html(strategist.get("roadmap", ""))
 
-    stops_html  = "\n".join(f'<li class="strategy-stop-item">❌ {escape_html(s)}</li>'  for s in stops)
-    starts_html = "\n".join(f'<li class="strategy-start-item">✅ {escape_html(s)}</li>' for s in starts)
+    def render_stop_item(s):
+        if isinstance(s, dict):
+            action = escape_html(s.get("action", ""))
+            reason = escape_html(s.get("reason", ""))
+            quote  = escape_html(s.get("quote", ""))
+            html   = f'<li class="strategy-stop-item">❌ {action}'
+            if reason:
+                html += f'<div class="strategy-reason">{reason}</div>'
+            if quote:
+                html += f'<div class="strategy-quote">「{quote}」</div>'
+            return html + '</li>'
+        return f'<li class="strategy-stop-item">❌ {escape_html(str(s))}</li>'
+
+    def render_start_item(s):
+        if isinstance(s, dict):
+            action = escape_html(s.get("action", ""))
+            reason = escape_html(s.get("reason", ""))
+            script = escape_html(s.get("script", ""))
+            html   = f'<li class="strategy-start-item">✅ {action}'
+            if reason:
+                html += f'<div class="strategy-reason">{reason}</div>'
+            if script:
+                html += f'<div class="strategy-script">参考话术：「{script}」</div>'
+            return html + '</li>'
+        return f'<li class="strategy-start-item">✅ {escape_html(str(s))}</li>'
+
+    stops_html  = "\n".join(render_stop_item(s) for s in stops)
+    starts_html = "\n".join(render_start_item(s) for s in starts)
 
     return f"""
     <div class="strategist-wrap">
@@ -236,6 +262,226 @@ def render_key_findings(key_findings):
     return "\n".join(items)
 
 
+def render_relationship_stage(rel_stage):
+    """渲染关系阶段时间线"""
+    if not rel_stage:
+        return ""
+    stage       = rel_stage.get("stage", "")
+    description = escape_html(rel_stage.get("stage_description", ""))
+    is_situ     = rel_stage.get("is_situationship", False)
+    situ_ev     = escape_html(rel_stage.get("situationship_evidence", ""))
+    stage_risk  = escape_html(rel_stage.get("stage_risk", ""))
+    adv_path    = escape_html(rel_stage.get("advancement_path", ""))
+
+    stages = ["初识试探期", "暧昧升温期", "拉锯确认期", "实名化前夜", "正式确认期", "关系维护期", "降温衰退期"]
+    current_idx = stages.index(stage) if stage in stages else -1
+
+    nodes_html = ""
+    for i, s in enumerate(stages):
+        is_current = (i == current_idx)
+        cls = "stage-node active" if is_current else "stage-node"
+        label_cls = "stage-label active-label" if is_current else "stage-label"
+        nodes_html += f'<div class="{cls}"><div class="stage-dot"></div><div class="{label_cls}">{escape_html(s)}</div></div>'
+
+    situ_badge = ""
+    if is_situ:
+        situ_badge = f"""
+      <div class="situ-badge">
+        <span>⚠ 实名化前夜</span> · 除了一个名分，其余情侣待遇你们都有了
+      </div>
+      {f'<p class="stage-evidence">证据：{situ_ev}</p>' if situ_ev else ''}"""
+
+    risk_html = f'<div class="stage-risk-row"><span class="stage-risk-label">当前风险</span> <span class="stage-risk-text">{stage_risk}</span></div>' if stage_risk else ""
+    adv_html  = f'<div class="stage-adv-row"><span class="stage-adv-label">推进方向</span> <span class="stage-adv-text">{adv_path}</span></div>' if adv_path else ""
+
+    return f"""
+    <div class="stage-wrap">
+      <div class="stage-timeline">{nodes_html}</div>
+      {situ_badge}
+      <div class="stage-desc">{description}</div>
+      {risk_html}
+      {adv_html}
+    </div>"""
+
+
+def render_emotional_asymmetry(asym):
+    """渲染情感不对称分析"""
+    if not asym:
+        return ""
+    score       = asym.get("symmetry_score", 5)
+    anchor      = asym.get("anchor_person", "me")
+    anchor_desc = escape_html(asym.get("anchor_description", ""))
+    conflict    = escape_html(asym.get("conflict_pattern", ""))
+
+    score_pct = int(score / 10 * 100)
+    anchor_label = "你" if anchor == "me" else "对方"
+    float_label  = "对方" if anchor == "me" else "你"
+
+    score_color = "#a855f7" if score >= 7 else ("#eab308" if score >= 4 else "#ef4444")
+
+    return f"""
+    <div class="asym-wrap">
+      <div class="asym-score-row">
+        <div class="asym-score-info">
+          <div class="asym-score-val" style="color:{score_color}">{score}<span style="font-size:.5em;font-weight:500;color:var(--text-muted)">/10</span></div>
+          <div class="asym-score-label">情感对称性</div>
+        </div>
+        <div class="asym-roles">
+          <span class="asym-role anchor-role">⚓ {anchor_label} = 锚</span>
+          <span class="asym-role float-role">🪁 {float_label} = 浮标</span>
+        </div>
+      </div>
+      <div class="asym-bar-track"><div class="asym-bar-fill" style="width:{score_pct}%;background:{score_color};"></div></div>
+      {f'<p class="asym-anchor-desc">{anchor_desc}</p>' if anchor_desc else ''}
+      {f'<div class="asym-conflict"><span class="asym-conflict-label">冲突模式</span> {conflict}</div>' if conflict else ''}
+    </div>"""
+
+
+def render_personality_portrait(portrait, contact_name):
+    """渲染人格深度画像"""
+    if not portrait:
+        return ""
+
+    def render_person(person_data, label):
+        if not person_data:
+            return ""
+        core_traits = person_data.get("core_traits", [])
+        core_needs  = escape_html(person_data.get("core_needs", ""))
+        defenses    = person_data.get("defense_mechanisms", [])
+        b5          = person_data.get("big_five_sketch", {})
+        trust       = escape_html(person_data.get("trust_architecture", ""))
+
+        traits_html = "".join(f'<span class="trait-chip">{escape_html(t)}</span>' for t in core_traits)
+
+        defenses_html = ""
+        for d in defenses:
+            dtype   = escape_html(d.get("type", ""))
+            trigger = escape_html(d.get("trigger", ""))
+            evidence= escape_html(d.get("evidence", ""))
+            meaning = escape_html(d.get("real_meaning", ""))
+            defenses_html += f"""
+          <div class="defense-item">
+            <div class="defense-type">{dtype}</div>
+            <div class="defense-detail">触发：{trigger}</div>
+            {f'<div class="defense-quote">「{evidence}」</div>' if evidence else ''}
+            {f'<div class="defense-meaning">真实含义：{meaning}</div>' if meaning else ''}
+          </div>"""
+
+        b5_html = ""
+        if b5:
+            b5_map = {
+                "conscientiousness": "尽责性",
+                "neuroticism": "神经质",
+                "agreeableness": "亲和力",
+                "openness": "开放性",
+                "extraversion": "外向性"
+            }
+            b5_rows = ""
+            for key, label_cn in b5_map.items():
+                val = escape_html(b5.get(key, ""))
+                if val:
+                    level = val.split(" ")[0] if " " in val or "—" in val else val[:1]
+                    level_color = {"高": "#a855f7", "中": "#6b7280", "低": "#3b82f6"}.get(level, "#6b7280")
+                    b5_rows += f'<div class="b5-row"><span class="b5-label">{label_cn}</span><span class="b5-val" style="color:{level_color}">{val}</span></div>'
+            b5_html = f'<div class="b5-section">{b5_rows}</div>'
+
+        return f"""
+        <div class="portrait-person">
+          <div class="portrait-person-title">{label}</div>
+          <div class="portrait-traits">{traits_html}</div>
+          {f'<div class="portrait-needs"><span class="needs-label">底层需求</span> {core_needs}</div>' if core_needs else ''}
+          {f'<div class="portrait-defenses-title">防御机制</div>{defenses_html}' if defenses_html else ''}
+          {b5_html}
+          {f'<div class="portrait-trust"><span class="trust-label">信任架构</span> {trust}</div>' if trust else ''}
+        </div>"""
+
+    # 需求-行为解码
+    needs_map_html = ""
+    user_data    = portrait.get("user", {})
+    partner_data = portrait.get("partner", {})
+    partner_needs_map = partner_data.get("needs_behavior_map", [])
+    if partner_needs_map:
+        items = ""
+        for m in partner_needs_map:
+            behavior = escape_html(m.get("behavior", ""))
+            need     = escape_html(m.get("need", ""))
+            decode   = escape_html(m.get("decode", ""))
+            items += f"""
+        <div class="nbm-item">
+          <div class="nbm-behavior">「{behavior}」</div>
+          <div class="nbm-arrow">↓</div>
+          <div class="nbm-need">{need}</div>
+          {f'<div class="nbm-decode">{decode}</div>' if decode else ''}
+        </div>"""
+        needs_map_html = f'<div class="nbm-section"><div class="nbm-title">行为解码：对方真正想要的是什么</div><div class="nbm-list">{items}</div></div>'
+
+    user_html    = render_person(user_data, "你")
+    partner_html = render_person(partner_data, escape_html(contact_name))
+
+    return f"""
+    <div class="portrait-grid">
+      {user_html}
+      {partner_html}
+    </div>
+    {needs_map_html}"""
+
+
+def render_language_patterns(lang_patterns, linguistic_stats, contact_name):
+    """渲染语言模式分析"""
+    if not lang_patterns:
+        return ""
+    hedging      = escape_html(lang_patterns.get("hedging_density", ""))
+    future_ori   = escape_html(lang_patterns.get("future_orientation", ""))
+    valence      = escape_html(lang_patterns.get("emotional_valence_ratio", ""))
+    conditional  = escape_html(lang_patterns.get("conditional_density", ""))
+    key_finding  = escape_html(lang_patterns.get("key_linguistic_finding", ""))
+
+    density_color = {"高": "#ef4444", "中": "#eab308", "低": "#22c55e"}
+
+    hedging_color     = density_color.get(hedging.split(" ")[0] if hedging else "", "#6b7280")
+    conditional_color = density_color.get(conditional.split(" ")[0] if conditional else "", "#6b7280")
+
+    future_color = {"真实期待": "#22c55e", "虚假承诺": "#ef4444", "中性": "#6b7280"}.get(future_ori, "#6b7280")
+
+    # 从统计数据补充数值
+    we_me    = linguistic_stats.get("pronoun_we_count", {}).get("me", 0)
+    we_them  = linguistic_stats.get("pronoun_we_count", {}).get("them", 0)
+    rev_me   = linguistic_stats.get("revoke_count", {}).get("me", 0)
+    rev_them = linguistic_stats.get("revoke_count", {}).get("them", 0)
+
+    return f"""
+    <div class="lang-wrap">
+      <div class="lang-cards">
+        <div class="lang-card">
+          <div class="lang-card-label">模糊词密度</div>
+          <div class="lang-card-val" style="color:{hedging_color}">{hedging or "—"}</div>
+          <div class="lang-card-sub">也许/可能/感觉/好像</div>
+        </div>
+        <div class="lang-card">
+          <div class="lang-card-label">条件句密度</div>
+          <div class="lang-card-val" style="color:{conditional_color}">{conditional or "—"}</div>
+          <div class="lang-card-sub">如果/要是/假如</div>
+        </div>
+        <div class="lang-card">
+          <div class="lang-card-label">未来指向</div>
+          <div class="lang-card-val" style="color:{future_color};font-size:14px">{future_ori or "—"}</div>
+          <div class="lang-card-sub">以后/将来/等你</div>
+        </div>
+        <div class="lang-card">
+          <div class="lang-card-label">情绪正负比</div>
+          <div class="lang-card-val" style="font-size:13px">{valence or "—"}</div>
+          <div class="lang-card-sub">正向 vs 负向情绪词</div>
+        </div>
+      </div>
+      <div class="lang-stats-row">
+        <span class="lang-stat-item">「我们」：你 {we_me} 次 / 对方 {we_them} 次</span>
+        <span class="lang-stat-sep">·</span>
+        <span class="lang-stat-item">撤回消息：你 {rev_me} 次 / 对方 {rev_them} 次</span>
+      </div>
+      {f'<div class="lang-finding"><span class="lang-finding-label">语言洞察</span><p>{key_finding}</p></div>' if key_finding else ''}
+    </div>"""
+
+
 def render_html(stats, analysis, contact_name):
     scores    = stats.get("scores", {})
     simp      = scores.get("simp_index", 0)
@@ -247,18 +493,27 @@ def render_html(stats, analysis, contact_name):
     bombing   = stats.get("bombing", {})
     goodnight = stats.get("goodnight", {})
     msg_len   = stats.get("message_length", {})
+    linguistic_stats = stats.get("linguistic", {})
 
     relationship_type  = escape_html(analysis.get("relationship_type", "未知"))
     relationship_label = escape_html(analysis.get("relationship_label", ""))
     relationship_trend = escape_html(analysis.get("relationship_trend", ""))
     verdict            = escape_html(analysis.get("verdict", ""))
+    simp_description   = escape_html(analysis.get("simp_description", ""))
+    love_description   = escape_html(analysis.get("love_description", ""))
 
-    danger_warnings_html = render_danger_warnings(analysis.get("danger_warnings", []))
-    sternberg_html       = render_sternberg(analysis.get("sternberg", {}))
-    gottman_html         = render_gottman(analysis.get("gottman", {}))
-    personality_html     = render_personality(analysis.get("personality", {}), contact_name)
-    strategist_html      = render_strategist(analysis.get("strategist", {}))
-    findings_html        = render_key_findings(analysis.get("key_findings", []))
+    danger_warnings_html   = render_danger_warnings(analysis.get("danger_warnings", []))
+    sternberg_html         = render_sternberg(analysis.get("sternberg", {}))
+    gottman_html           = render_gottman(analysis.get("gottman", {}))
+    personality_html       = render_personality(analysis.get("personality", {}), contact_name)
+    strategist_html        = render_strategist(analysis.get("strategist", {}))
+    findings_html          = render_key_findings(analysis.get("key_findings", []))
+    relationship_stage_html = render_relationship_stage(analysis.get("relationship_stage"))
+    emotional_asym_html    = render_emotional_asymmetry(analysis.get("emotional_asymmetry"))
+    portrait_html          = render_personality_portrait(analysis.get("personality_portrait"), contact_name)
+    lang_patterns_html     = render_language_patterns(
+        analysis.get("language_patterns"), linguistic_stats, contact_name
+    )
 
     chart = build_chart_data(stats)
     chart_data_js = json.dumps(chart, ensure_ascii=False)
@@ -816,6 +1071,258 @@ def render_html(stats, analysis, contact_name):
     .ingredient-row {{ grid-template-columns: 90px 1fr 40px; }}
     .verdict-card {{ padding: 32px 20px; }}
     .analysis-row {{ grid-template-columns: 1fr; }}
+    .portrait-grid {{ grid-template-columns: 1fr; }}
+    .lang-cards {{ grid-template-columns: repeat(2, 1fr); }}
+  }}
+
+  /* ── Score Description ── */
+  .score-desc {{
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    text-align: left;
+  }}
+
+  /* ── Relationship Stage Timeline ── */
+  .stage-wrap {{ padding: 4px 0; }}
+  .stage-timeline {{
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    scrollbar-width: none;
+  }}
+  .stage-timeline::-webkit-scrollbar {{ display: none; }}
+  .stage-node {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 80px;
+    position: relative;
+  }}
+  .stage-node::before {{
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--surface-2);
+    z-index: 0;
+  }}
+  .stage-node:last-child::before {{ display: none; }}
+  .stage-dot {{
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 2px solid var(--border);
+    position: relative;
+    z-index: 1;
+    margin-bottom: 8px;
+    transition: all .3s;
+  }}
+  .stage-node.active .stage-dot {{
+    background: var(--accent-1);
+    border-color: var(--accent-1);
+    box-shadow: 0 0 12px rgba(168,85,247,.5);
+    transform: scale(1.3);
+  }}
+  .stage-label {{
+    font-size: 10px;
+    color: var(--text-subtle);
+    text-align: center;
+    line-height: 1.4;
+  }}
+  .stage-node.active .active-label {{
+    color: var(--accent-1);
+    font-weight: 600;
+    font-size: 11px;
+  }}
+  .situ-badge {{
+    background: rgba(234,179,8,.08);
+    border: 1px solid rgba(234,179,8,.2);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #eab308;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }}
+  .stage-evidence {{
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    margin-bottom: 12px;
+  }}
+  .stage-desc {{
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }}
+  .stage-risk-row, .stage-adv-row {{
+    display: flex;
+    gap: 10px;
+    font-size: 13px;
+    margin-bottom: 8px;
+    align-items: flex-start;
+  }}
+  .stage-risk-label {{ color: #ef4444; font-weight: 600; white-space: nowrap; }}
+  .stage-adv-label  {{ color: #22c55e; font-weight: 600; white-space: nowrap; }}
+  .stage-risk-text, .stage-adv-text {{ color: var(--text-muted); }}
+
+  /* ── Emotional Asymmetry ── */
+  .asym-wrap {{ padding: 4px 0; }}
+  .asym-score-row {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 16px;
+  }}
+  .asym-score-val {{ font-size: 48px; font-weight: 900; line-height: 1; letter-spacing: -.03em; }}
+  .asym-score-label {{ font-size: 11px; color: var(--text-muted); font-weight: 500; margin-top: 4px; }}
+  .asym-roles {{ display: flex; flex-direction: column; gap: 6px; }}
+  .asym-role {{
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid;
+  }}
+  .anchor-role {{ color: #a855f7; border-color: rgba(168,85,247,.3); background: rgba(168,85,247,.08); }}
+  .float-role  {{ color: #6b7280; border-color: rgba(107,114,128,.3); background: rgba(107,114,128,.08); }}
+  .asym-bar-track {{ height: 4px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-bottom: 14px; }}
+  .asym-bar-fill  {{ height: 100%; border-radius: 99px; transition: width .6s; }}
+  .asym-anchor-desc {{ font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-bottom: 10px; }}
+  .asym-conflict {{ font-size: 13px; color: var(--text-muted); }}
+  .asym-conflict-label {{ color: #eab308; font-weight: 600; margin-right: 8px; }}
+
+  /* ── Language Patterns ── */
+  .lang-wrap {{ padding: 4px 0; }}
+  .lang-cards {{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }}
+  .lang-card {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 12px;
+    text-align: center;
+  }}
+  .lang-card-label {{ font-size: 10px; font-weight: 600; color: var(--text-subtle); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 8px; }}
+  .lang-card-val   {{ font-size: 18px; font-weight: 800; margin-bottom: 4px; }}
+  .lang-card-sub   {{ font-size: 10px; color: var(--text-subtle); }}
+  .lang-stats-row {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }}
+  .lang-stat-sep {{ color: var(--text-subtle); }}
+  .lang-finding {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-1);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+  }}
+  .lang-finding-label {{ font-size: 10px; font-weight: 600; color: var(--accent-1); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; display: block; }}
+  .lang-finding p {{ font-size: 13px; color: var(--text-muted); line-height: 1.7; }}
+
+  /* ── Personality Portrait ── */
+  .portrait-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }}
+  .portrait-person {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }}
+  .portrait-person-title {{ font-size: 13px; font-weight: 700; color: var(--text-muted); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 12px; }}
+  .portrait-traits {{ display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }}
+  .trait-chip {{
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: rgba(168,85,247,.12);
+    border: 1px solid rgba(168,85,247,.25);
+    color: #c084fc;
+  }}
+  .portrait-needs {{ font-size: 13px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6; }}
+  .needs-label {{ color: var(--accent-1); font-weight: 600; margin-right: 6px; }}
+  .portrait-defenses-title {{ font-size: 11px; font-weight: 600; color: var(--text-subtle); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }}
+  .defense-item {{
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }}
+  .defense-type {{ font-size: 12px; font-weight: 700; color: #f97316; margin-bottom: 4px; }}
+  .defense-detail {{ font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }}
+  .defense-quote {{
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 4px 8px;
+    border-left: 2px solid rgba(249,115,22,.3);
+    margin: 6px 0;
+  }}
+  .defense-meaning {{ font-size: 12px; color: #6b7280; line-height: 1.6; margin-top: 4px; }}
+  .b5-section {{ margin-top: 14px; }}
+  .b5-row {{ display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }}
+  .b5-label {{ color: var(--text-muted); }}
+  .b5-val {{ font-weight: 600; font-size: 11px; max-width: 60%; text-align: right; line-height: 1.4; }}
+  .portrait-trust {{ font-size: 12px; color: var(--text-muted); margin-top: 12px; line-height: 1.6; }}
+  .trust-label {{ color: #3b82f6; font-weight: 600; margin-right: 6px; }}
+
+  /* ── Needs-Behavior Map ── */
+  .nbm-section {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }}
+  .nbm-title {{ font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 16px; }}
+  .nbm-list {{ display: flex; flex-direction: column; gap: 14px; }}
+  .nbm-item {{
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }}
+  .nbm-behavior {{ font-size: 13px; font-style: italic; color: var(--text); margin-bottom: 4px; }}
+  .nbm-arrow {{ font-size: 18px; color: var(--accent-1); margin: 2px 0; }}
+  .nbm-need {{ font-size: 13px; font-weight: 700; color: #c084fc; margin-bottom: 6px; }}
+  .nbm-decode {{ font-size: 12px; color: var(--text-muted); line-height: 1.6; }}
+
+  /* ── Strategy Quote/Script ── */
+  .strategy-reason {{ font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }}
+  .strategy-quote {{
+    font-size: 11px;
+    font-style: italic;
+    color: #6b7280;
+    padding: 4px 8px;
+    border-left: 2px solid rgba(239,68,68,.4);
+    margin-top: 6px;
+  }}
+  .strategy-script {{
+    font-size: 11px;
+    font-style: italic;
+    color: #6b7280;
+    padding: 4px 8px;
+    border-left: 2px solid rgba(34,197,94,.4);
+    margin-top: 6px;
   }}
 </style>
 </head>
@@ -840,12 +1347,14 @@ def render_html(stats, analysis, contact_name):
         <div class="score-label">舔狗指数</div>
         <div class="score-value">{simp}</div>
         <div class="score-bar"><div class="score-bar-fill" style="width:{simp}%"></div></div>
+        {f'<div class="score-desc">{simp_description}</div>' if simp_description else ''}
       </div>
       <div class="score-card loved">
         <div class="score-emoji">💜</div>
         <div class="score-label">被爱指数</div>
         <div class="score-value">{loved}</div>
         <div class="score-bar"><div class="score-bar-fill" style="width:{loved}%"></div></div>
+        {f'<div class="score-desc">{love_description}</div>' if love_description else ''}
       </div>
       <div class="score-card cold">
         <div class="score-emoji">🧊</div>
@@ -986,13 +1495,25 @@ def render_html(stats, analysis, contact_name):
     </div>
   </section>
 
+  <!-- 语言模式分析 -->
+  {f'''<section class="section">
+    <p class="section-label">语言模式分析</p>
+    {lang_patterns_html}
+  </section>''' if lang_patterns_html else ''}
+
   <!-- ⚠️ 危险预警 -->
   <section class="section">
     <p class="section-label">⚠️ 危险预警</p>
     {danger_warnings_html}
   </section>
 
-  <!-- 关系分析：Sternberg + Gottman -->
+  <!-- 关系阶段 -->
+  {f'''<section class="section">
+    <p class="section-label">关系阶段定位</p>
+    {relationship_stage_html}
+  </section>''' if relationship_stage_html else ''}
+
+  <!-- 关系分析：Sternberg + Gottman + 情感不对称 -->
   <section class="section">
     <p class="section-label">关系诊断</p>
     <div class="analysis-row">
@@ -1005,6 +1526,10 @@ def render_html(stats, analysis, contact_name):
         {gottman_html}
       </div>
     </div>
+    {f'''<div class="analysis-card" style="margin-top:12px">
+      <div class="analysis-card-title">情感投入不对称</div>
+      {emotional_asym_html}
+    </div>''' if emotional_asym_html else ''}
   </section>
 
   <!-- 人格分析 -->
@@ -1012,6 +1537,12 @@ def render_html(stats, analysis, contact_name):
     <p class="section-label">人格与依恋分析</p>
     {personality_html}
   </section>
+
+  <!-- 人格深度画像 -->
+  {f'''<section class="section">
+    <p class="section-label">人格深度画像 🧬</p>
+    {portrait_html}
+  </section>''' if portrait_html else ''}
 
   <!-- 军师建议 -->
   <section class="section">
