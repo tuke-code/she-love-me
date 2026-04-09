@@ -1,8 +1,7 @@
 <div align="center">
 
-<img height="80" src="https://img.shields.io/badge/%E5%A5%B9%E7%88%B1%E4%BD%A0%E5%90%97%EF%BC%9F-%E6%81%8B%E6%83%85%E5%88%86%E6%9E%90%E5%AE%A4%20%C2%B7%20Skill-ff69b4?style=for-the-badge&logo=wechat&logoColor=white" alt="她爱你吗？恋情分析室 · Skill" />
+<img src="assets/banner.svg" alt="她爱你吗？恋情分析室" width="860" />
 
-<br/>
 <br/>
 
 **用 AI + 心理学，帮你从微信聊天记录里找到答案。**
