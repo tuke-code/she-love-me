@@ -43,22 +43,222 @@ def build_chart_data(stats):
     }
 
 
-def render_html(stats, analysis, contact_name):
-    scores = stats.get("scores", {})
-    simp = scores.get("simp_index", 0)
-    loved = scores.get("loved_index", 0)
-    cold = scores.get("cold_index", 0)
-    basic = stats.get("basic", {})
-    initiative = stats.get("initiative", {})
-    reply = stats.get("reply_speed", {})
-    bombing = stats.get("bombing", {})
-    goodnight = stats.get("goodnight", {})
-    msg_len = stats.get("message_length", {})
+def escape_html(s):
+    if not isinstance(s, str):
+        s = str(s)
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
-    relationship_type = analysis.get("relationship_type", "未知")
-    relationship_label = analysis.get("relationship_label", "")
-    verdict = analysis.get("verdict", "")
-    key_findings = analysis.get("key_findings", [])
+
+def render_danger_warnings(danger_warnings):
+    if not danger_warnings:
+        return '<p style="color:var(--text-subtle);font-size:13px;">本次鉴定未发现明显危险信号</p>'
+
+    level_colors = {
+        "极高危": ("#ef4444", "rgba(239,68,68,.12)", "rgba(239,68,68,.25)"),
+        "高危":   ("#f97316", "rgba(249,115,22,.12)", "rgba(249,115,22,.25)"),
+        "中危":   ("#eab308", "rgba(234,179,8,.12)",  "rgba(234,179,8,.25)"),
+        "低危":   ("#22c55e", "rgba(34,197,94,.12)",  "rgba(34,197,94,.25)"),
+    }
+
+    items = []
+    for w in danger_warnings:
+        wtype   = escape_html(w.get("type", ""))
+        level   = w.get("level", "中危")
+        evidence = escape_html(w.get("evidence", ""))
+        color, bg, border = level_colors.get(level, ("#6b7280", "rgba(107,114,128,.12)", "rgba(107,114,128,.25)"))
+        items.append(f"""
+        <div class="warning-card" style="border-color:{border};background:{bg};">
+          <div class="warning-header">
+            <span class="warning-type">{wtype}</span>
+            <span class="warning-badge" style="color:{color};background:{bg};border-color:{border};">{level}</span>
+          </div>
+          <p class="warning-evidence">{evidence}</p>
+        </div>""")
+    return "\n".join(items)
+
+
+def render_sternberg(sternberg):
+    passion    = sternberg.get("passion", 0)
+    intimacy   = sternberg.get("intimacy", 0)
+    commitment = sternberg.get("commitment", 0)
+    love_type  = escape_html(sternberg.get("love_type", ""))
+    return f"""
+    <div class="sternberg-wrap">
+      <div class="sternberg-row">
+        <span class="sternberg-label">激情 Passion</span>
+        <div class="sternberg-track"><div class="sternberg-fill s-passion" style="width:{passion}%"></div></div>
+        <span class="sternberg-val">{passion}</span>
+      </div>
+      <div class="sternberg-row">
+        <span class="sternberg-label">亲密 Intimacy</span>
+        <div class="sternberg-track"><div class="sternberg-fill s-intimacy" style="width:{intimacy}%"></div></div>
+        <span class="sternberg-val">{intimacy}</span>
+      </div>
+      <div class="sternberg-row">
+        <span class="sternberg-label">承诺 Commitment</span>
+        <div class="sternberg-track"><div class="sternberg-fill s-commitment" style="width:{commitment}%"></div></div>
+        <span class="sternberg-val">{commitment}</span>
+      </div>
+      <div class="sternberg-type">→ {love_type}</div>
+    </div>"""
+
+
+def render_gottman(gottman):
+    ratio    = gottman.get("positive_negative_ratio", 0)
+    horsemen = gottman.get("horsemen_detected", [])
+    risk     = escape_html(gottman.get("risk_level", ""))
+    ratio_pct = min(int(ratio / 10 * 100), 100)
+
+    horsemen_chips = "".join(
+        f'<span class="horseman-chip">{escape_html(h)}</span>' for h in horsemen
+    )
+    if not horsemen_chips:
+        horsemen_chips = '<span style="color:var(--text-subtle);font-size:12px;">未检测到四骑士信号</span>'
+
+    risk_color = {"高危": "#ef4444", "中危": "#eab308", "低危": "#22c55e"}.get(risk, "#6b7280")
+
+    return f"""
+    <div class="gottman-wrap">
+      <div class="gottman-ratio-row">
+        <div>
+          <div class="gottman-ratio-val">{ratio}<span style="font-size:.5em;font-weight:500;color:var(--text-muted)">:1</span></div>
+          <div class="gottman-ratio-label">正负互动比（健康值 ≥ 5:1）</div>
+        </div>
+        <div class="gottman-risk-badge" style="color:{risk_color};border-color:{risk_color}22;background:{risk_color}11;">{risk}</div>
+      </div>
+      <div class="gottman-bar-track"><div class="gottman-bar-fill" style="width:{ratio_pct}%;background:{risk_color};"></div></div>
+      <div class="gottman-horsemen-label">四骑士检测</div>
+      <div class="gottman-horsemen">{horsemen_chips}</div>
+    </div>"""
+
+
+def render_personality(personality, contact_name):
+    user_att    = escape_html(personality.get("user_attachment", ""))
+    partner_att = escape_html(personality.get("partner_attachment", ""))
+    user_comm   = escape_html(personality.get("user_communication", ""))
+    partner_comm = escape_html(personality.get("partner_communication", ""))
+    user_lang   = escape_html(personality.get("user_love_language", ""))
+    partner_lang = escape_html(personality.get("partner_love_language", ""))
+    pursue_dist = personality.get("pursue_distance_cycle", False)
+    lang_mismatch = personality.get("love_language_mismatch", False)
+
+    pursue_html = ""
+    if pursue_dist:
+        pursue_html = """
+      <div class="pursue-alert">
+        ⚠️ <strong>追逃循环已形成</strong>：你越追，TA越逃；TA越逃，你越焦虑——负向循环持续强化。
+      </div>"""
+
+    lang_mismatch_html = ""
+    if lang_mismatch:
+        lang_mismatch_html = """
+      <div class="lang-mismatch-alert">
+        💬 <strong>爱的语言不匹配</strong>：你们表达爱的方式不同，导致给予了但对方感受不到。
+      </div>"""
+
+    return f"""
+    <div class="personality-table">
+      <div class="pt-row pt-header">
+        <div class="pt-cell"></div>
+        <div class="pt-cell pt-you">你</div>
+        <div class="pt-cell pt-them">{escape_html(contact_name)}</div>
+      </div>
+      <div class="pt-row">
+        <div class="pt-cell pt-label">依恋类型</div>
+        <div class="pt-cell">{user_att}</div>
+        <div class="pt-cell">{partner_att}</div>
+      </div>
+      <div class="pt-row">
+        <div class="pt-cell pt-label">沟通风格</div>
+        <div class="pt-cell">{user_comm}</div>
+        <div class="pt-cell">{partner_comm}</div>
+      </div>
+      <div class="pt-row">
+        <div class="pt-cell pt-label">爱的语言</div>
+        <div class="pt-cell">{user_lang}</div>
+        <div class="pt-cell">{partner_lang}</div>
+      </div>
+    </div>
+    {pursue_html}
+    {lang_mismatch_html}"""
+
+
+def render_strategist(strategist):
+    core    = escape_html(strategist.get("core_problem", ""))
+    stops   = strategist.get("stop_doing", [])
+    starts  = strategist.get("start_doing", [])
+    roadmap = escape_html(strategist.get("roadmap", ""))
+
+    stops_html  = "\n".join(f'<li class="strategy-stop-item">❌ {escape_html(s)}</li>'  for s in stops)
+    starts_html = "\n".join(f'<li class="strategy-start-item">✅ {escape_html(s)}</li>' for s in starts)
+
+    return f"""
+    <div class="strategist-wrap">
+      <div class="core-problem-card">
+        <div class="core-problem-label">核心问题</div>
+        <p class="core-problem-text">{core}</p>
+      </div>
+      <div class="strategy-grid">
+        <div class="strategy-col">
+          <div class="strategy-col-title stop-title">立即停止</div>
+          <ul class="strategy-list">{stops_html}</ul>
+        </div>
+        <div class="strategy-col">
+          <div class="strategy-col-title start-title">立即开始</div>
+          <ul class="strategy-list">{starts_html}</ul>
+        </div>
+      </div>
+      <div class="roadmap-card">
+        <div class="roadmap-label">推进路线图</div>
+        <p class="roadmap-text">{roadmap}</p>
+      </div>
+    </div>"""
+
+
+def render_key_findings(key_findings):
+    if not key_findings:
+        return '<p style="color:var(--text-subtle);font-size:13px;">暂无鉴定发现</p>'
+
+    items = []
+    for i, f in enumerate(key_findings):
+        title    = escape_html(f.get("title", f"发现{i+1}"))
+        quote    = escape_html(f.get("quote", ""))
+        analysis = escape_html(f.get("analysis", ""))
+        items.append(f"""
+        <div class="finding-card">
+          <div class="finding-index">{i+1:02d}</div>
+          <div class="finding-body">
+            <div class="finding-title">{title}</div>
+            {f'<blockquote class="finding-quote">「{quote}」</blockquote>' if quote else ''}
+            <p class="finding-analysis">{analysis}</p>
+          </div>
+        </div>""")
+    return "\n".join(items)
+
+
+def render_html(stats, analysis, contact_name):
+    scores    = stats.get("scores", {})
+    simp      = scores.get("simp_index", 0)
+    loved     = scores.get("loved_index", 0)
+    cold      = scores.get("cold_index", 0)
+    basic     = stats.get("basic", {})
+    initiative = stats.get("initiative", {})
+    reply     = stats.get("reply_speed", {})
+    bombing   = stats.get("bombing", {})
+    goodnight = stats.get("goodnight", {})
+    msg_len   = stats.get("message_length", {})
+
+    relationship_type  = escape_html(analysis.get("relationship_type", "未知"))
+    relationship_label = escape_html(analysis.get("relationship_label", ""))
+    relationship_trend = escape_html(analysis.get("relationship_trend", ""))
+    verdict            = escape_html(analysis.get("verdict", ""))
+
+    danger_warnings_html = render_danger_warnings(analysis.get("danger_warnings", []))
+    sternberg_html       = render_sternberg(analysis.get("sternberg", {}))
+    gottman_html         = render_gottman(analysis.get("gottman", {}))
+    personality_html     = render_personality(analysis.get("personality", {}), contact_name)
+    strategist_html      = render_strategist(analysis.get("strategist", {}))
+    findings_html        = render_key_findings(analysis.get("key_findings", []))
 
     chart = build_chart_data(stats)
     chart_data_js = json.dumps(chart, ensure_ascii=False)
@@ -66,16 +266,12 @@ def render_html(stats, analysis, contact_name):
 
     date_range = basic.get("date_range", ["?", "?"])
     total_days = basic.get("total_days", 1)
-    my_ratio = int(basic.get("my_ratio", 0) * 100)
+    my_ratio   = int(basic.get("my_ratio", 0) * 100)
     their_ratio = int(basic.get("their_ratio", 0) * 100)
     speed_ratio = reply.get("speed_ratio", 1)
 
-    findings_html = "\n".join(
-        f"""<div class="finding-card">
-          <div class="finding-index">{i + 1:02d}</div>
-          <p>{f}</p>
-        </div>"""
-        for i, f in enumerate(key_findings)
+    trend_icon = {"升温中": "🔥", "平稳维持": "➡️", "逐渐降温": "❄️", "已经凉透": "💀"}.get(
+        analysis.get("relationship_trend", ""), "📊"
     )
 
     return f"""<!DOCTYPE html>
@@ -83,7 +279,7 @@ def render_html(stats, analysis, contact_name):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>她爱你吗 · {contact_name}</title>
+<title>她爱你吗 · {escape_html(contact_name)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -283,6 +479,188 @@ def render_html(stats, analysis, contact_name):
     background: var(--grad-love);
   }}
 
+  /* ── Danger Warnings ── */
+  .warning-card {{
+    border: 1px solid;
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    margin-bottom: 12px;
+  }}
+  .warning-header {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }}
+  .warning-type {{
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }}
+  .warning-badge {{
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid;
+    border-radius: 99px;
+    padding: 3px 10px;
+    letter-spacing: .06em;
+  }}
+  .warning-evidence {{
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-muted);
+  }}
+
+  /* ── Sternberg ── */
+  .sternberg-wrap {{ display: flex; flex-direction: column; gap: 16px; }}
+  .sternberg-row {{
+    display: grid;
+    grid-template-columns: 130px 1fr 40px;
+    align-items: center;
+    gap: 14px;
+  }}
+  .sternberg-label {{ font-size: 12px; font-weight: 600; color: var(--text-muted); }}
+  .sternberg-track {{
+    height: 8px;
+    background: var(--surface-2);
+    border-radius: 99px;
+    overflow: hidden;
+  }}
+  .sternberg-fill {{ height: 100%; border-radius: 99px; }}
+  .s-passion    {{ background: linear-gradient(90deg, #ec4899, #f97316); }}
+  .s-intimacy   {{ background: linear-gradient(90deg, #a855f7, #3b82f6); }}
+  .s-commitment {{ background: linear-gradient(90deg, #22c55e, #06b6d4); }}
+  .sternberg-val {{ font-size: 14px; font-weight: 700; text-align: right; color: var(--text-muted); }}
+  .sternberg-type {{
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-1);
+    padding: 10px 16px;
+    background: rgba(168,85,247,.08);
+    border: 1px solid rgba(168,85,247,.15);
+    border-radius: var(--radius-sm);
+  }}
+
+  /* ── Gottman ── */
+  .gottman-wrap {{ display: flex; flex-direction: column; gap: 14px; }}
+  .gottman-ratio-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }}
+  .gottman-ratio-val {{
+    font-size: 40px;
+    font-weight: 900;
+    letter-spacing: -.03em;
+    color: var(--text);
+  }}
+  .gottman-ratio-label {{ font-size: 11px; color: var(--text-muted); margin-top: 4px; }}
+  .gottman-risk-badge {{
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid;
+    border-radius: 99px;
+    padding: 6px 14px;
+    letter-spacing: .06em;
+  }}
+  .gottman-bar-track {{
+    height: 6px;
+    background: var(--surface-2);
+    border-radius: 99px;
+    overflow: hidden;
+  }}
+  .gottman-bar-fill {{ height: 100%; border-radius: 99px; }}
+  .gottman-horsemen-label {{ font-size: 11px; font-weight: 600; color: var(--text-subtle); letter-spacing: .08em; text-transform: uppercase; margin-top: 4px; }}
+  .gottman-horsemen {{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }}
+  .horseman-chip {{
+    font-size: 12px;
+    font-weight: 600;
+    color: #ef4444;
+    background: rgba(239,68,68,.1);
+    border: 1px solid rgba(239,68,68,.2);
+    border-radius: 99px;
+    padding: 4px 12px;
+  }}
+
+  /* ── Personality Table ── */
+  .personality-table {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }}
+  .pt-row {{
+    display: grid;
+    grid-template-columns: 90px 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }}
+  .pt-row:last-child {{ border-bottom: none; }}
+  .pt-cell {{
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-right: 1px solid var(--border);
+  }}
+  .pt-cell:last-child {{ border-right: none; }}
+  .pt-header .pt-cell {{ font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-subtle); }}
+  .pt-you   {{ color: #f59e0b !important; font-weight: 600; }}
+  .pt-them  {{ color: #a855f7 !important; font-weight: 600; }}
+  .pt-label {{ font-weight: 600; color: var(--text-subtle) !important; font-size: 11px !important; text-transform: uppercase; letter-spacing: .06em; }}
+  .pursue-alert {{
+    font-size: 13px;
+    line-height: 1.7;
+    color: #f97316;
+    background: rgba(249,115,22,.08);
+    border: 1px solid rgba(249,115,22,.2);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }}
+  .lang-mismatch-alert {{
+    font-size: 13px;
+    line-height: 1.7;
+    color: #eab308;
+    background: rgba(234,179,8,.08);
+    border: 1px solid rgba(234,179,8,.2);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+  }}
+
+  /* ── Strategist ── */
+  .strategist-wrap {{ display: flex; flex-direction: column; gap: 16px; }}
+  .core-problem-card {{
+    background: rgba(168,85,247,.06);
+    border: 1px solid rgba(168,85,247,.15);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+  }}
+  .core-problem-label {{ font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-1); margin-bottom: 10px; }}
+  .core-problem-text {{ font-size: 14px; line-height: 1.8; color: var(--text-muted); }}
+  .strategy-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }}
+  @media(max-width:560px) {{ .strategy-grid {{ grid-template-columns: 1fr; }} }}
+  .strategy-col {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+  }}
+  .strategy-col-title {{ font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 14px; }}
+  .stop-title  {{ color: #ef4444; }}
+  .start-title {{ color: #22c55e; }}
+  .strategy-list {{ list-style: none; display: flex; flex-direction: column; gap: 10px; }}
+  .strategy-stop-item,
+  .strategy-start-item {{ font-size: 13px; line-height: 1.7; color: var(--text-muted); }}
+  .roadmap-card {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+  }}
+  .roadmap-label {{ font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-3); margin-bottom: 10px; }}
+  .roadmap-text {{ font-size: 14px; line-height: 1.9; color: var(--text-muted); }}
+
   /* ── Findings ── */
   .findings-list {{ display: flex; flex-direction: column; gap: 12px; }}
   .finding-card {{
@@ -305,7 +683,17 @@ def render_html(stats, analysis, contact_name):
     letter-spacing: .05em;
     padding-top: 2px;
   }}
-  .finding-card p {{ font-size: 14px; line-height: 1.7; color: var(--text-muted); }}
+  .finding-title {{ font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px; }}
+  .finding-quote {{
+    font-size: 13px;
+    font-style: italic;
+    color: var(--accent-1);
+    border-left: 2px solid rgba(168,85,247,.4);
+    padding-left: 12px;
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }}
+  .finding-analysis {{ font-size: 13px; line-height: 1.7; color: var(--text-muted); }}
 
   /* ── Verdict ── */
   .verdict-card {{
@@ -324,6 +712,13 @@ def render_html(stats, analysis, contact_name):
     background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(168,85,247,.08) 0%, transparent 70%);
     pointer-events: none;
   }}
+  .verdict-meta-row {{
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }}
   .verdict-type-badge {{
     display: inline-block;
     font-size: 11px;
@@ -335,7 +730,17 @@ def render_html(stats, analysis, contact_name):
     border: 1px solid rgba(168,85,247,.2);
     border-radius: 99px;
     padding: 6px 14px;
-    margin-bottom: 20px;
+  }}
+  .verdict-trend-badge {{
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 6px 14px;
   }}
   .verdict-type {{
     font-size: clamp(32px, 6vw, 52px);
@@ -377,6 +782,24 @@ def render_html(stats, analysis, contact_name):
   .chart-wrap {{ position: relative; height: 180px; }}
   .charts-row {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }}
 
+  /* ── Analysis Row ── */
+  .analysis-row {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }}
+  @media(max-width:560px) {{ .analysis-row {{ grid-template-columns: 1fr; }} }}
+  .analysis-card {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+  }}
+  .analysis-card-title {{
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+    margin-bottom: 16px;
+  }}
+
   /* ── Footer ── */
   .footer {{
     text-align: center;
@@ -392,6 +815,7 @@ def render_html(stats, analysis, contact_name):
     .charts-row {{ grid-template-columns: 1fr; }}
     .ingredient-row {{ grid-template-columns: 90px 1fr 40px; }}
     .verdict-card {{ padding: 32px 20px; }}
+    .analysis-row {{ grid-template-columns: 1fr; }}
   }}
 </style>
 </head>
@@ -401,7 +825,7 @@ def render_html(stats, analysis, contact_name):
 <header class="hero">
   <p class="hero-eyebrow">舔狗鉴定所 · 聊天记录分析报告</p>
   <h1 class="hero-title">她爱你吗？</h1>
-  <p class="hero-contact">与 <span>{contact_name}</span> 的聊天记录</p>
+  <p class="hero-contact">与 <span>{escape_html(contact_name)}</span> 的聊天记录</p>
   <p class="hero-date">{date_range[0]} — {date_range[1]} · {total_days} 天 · {basic.get('total_messages', 0):,} 条消息</p>
 </header>
 
@@ -562,6 +986,39 @@ def render_html(stats, analysis, contact_name):
     </div>
   </section>
 
+  <!-- ⚠️ 危险预警 -->
+  <section class="section">
+    <p class="section-label">⚠️ 危险预警</p>
+    {danger_warnings_html}
+  </section>
+
+  <!-- 关系分析：Sternberg + Gottman -->
+  <section class="section">
+    <p class="section-label">关系诊断</p>
+    <div class="analysis-row">
+      <div class="analysis-card">
+        <div class="analysis-card-title">Sternberg 爱情三角</div>
+        {sternberg_html}
+      </div>
+      <div class="analysis-card">
+        <div class="analysis-card-title">Gottman 关系健康度</div>
+        {gottman_html}
+      </div>
+    </div>
+  </section>
+
+  <!-- 人格分析 -->
+  <section class="section">
+    <p class="section-label">人格与依恋分析</p>
+    {personality_html}
+  </section>
+
+  <!-- 军师建议 -->
+  <section class="section">
+    <p class="section-label">🎯 军师建议</p>
+    {strategist_html}
+  </section>
+
   <!-- 鉴定发现 -->
   <section class="section">
     <p class="section-label">鉴定发现</p>
@@ -574,7 +1031,10 @@ def render_html(stats, analysis, contact_name):
   <section class="section">
     <p class="section-label">最终鉴定</p>
     <div class="verdict-card">
-      <div class="verdict-type-badge">舔狗鉴定所 · 官方认证</div>
+      <div class="verdict-meta-row">
+        <span class="verdict-type-badge">舔狗鉴定所 · 官方认证</span>
+        {f'<span class="verdict-trend-badge">{trend_icon} {relationship_trend}</span>' if relationship_trend else ''}
+      </div>
       <div class="verdict-type">{relationship_type}</div>
       <div class="verdict-label">{relationship_label}</div>
       <div class="verdict-divider"></div>
@@ -653,7 +1113,7 @@ new Chart(document.getElementById('hourChart'), {{
 new Chart(document.getElementById('pieChart'), {{
   type: 'doughnut',
   data: {{
-    labels: ['你', '{contact_name}'],
+    labels: ['你', '{escape_html(contact_name)}'],
     datasets: [{{
       data: d.pie_data,
       backgroundColor: ['rgba(245,158,11,.8)', 'rgba(168,85,247,.8)'],
