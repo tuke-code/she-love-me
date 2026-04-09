@@ -4,10 +4,6 @@
 
 <br/>
 
-**用 AI + 心理学，帮你从微信聊天记录里找到答案。**
-
-<br/>
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-0078d4.svg?style=flat-square)]()
 [![WeChat](https://img.shields.io/badge/WeChat-4.0%2B-07c160.svg?style=flat-square)]()
