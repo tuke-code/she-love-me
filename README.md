@@ -14,7 +14,6 @@
 [![WeChat](https://img.shields.io/badge/WeChat-4.0%2B-07c160.svg?style=flat-square)]()
 [![Agent Skill](https://img.shields.io/badge/Universal-Agent%20Skill-d97706.svg?style=flat-square)](https://github.com/863401402/she-love-me)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-✓-d97706.svg?style=flat-square)](https://claude.ai/code)
-[![Codex](https://img.shields.io/badge/Codex-✓-111111.svg?style=flat-square)](https://developers.openai.com/codex)
 [![Cursor](https://img.shields.io/badge/Cursor-✓-000000.svg?style=flat-square)](https://cursor.sh)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/863401402/she-love-me/pulls)
 
@@ -28,7 +27,7 @@
 
 ## 简介
 
-**她爱你吗？** 是一个**通用 Agent Workflow**，支持 Claude Code、Codex、Cursor、GitHub Copilot、Gemini CLI 等主流 AI 编程工具。
+**她爱你吗？** 是一个**通用 Agent Skill**，支持 Claude Code、Cursor、GitHub Copilot、Gemini CLI 等主流 AI 编程工具。
 
 只需要一条命令 `/she-love-me`，它就能自动解密你的微信数据库、分析你和某个联系人的全部聊天记录，然后告诉你：**你到底有多舔，她到底爱不爱你。**
 
@@ -98,26 +97,17 @@ cd she-love-me
 | 工具 | Skill 格式 | 启动命令 | 运行命令 |
 |------|-----------|----------|----------|
 | [Claude Code](https://claude.ai/code) | `.claude/skills/` | `claude` | `/she-love-me` |
-| [Codex](https://developers.openai.com/codex) | `AGENTS.md` | `codex` / 在 Codex 中打开项目 | 直接输入「运行 she-love-me 工作流」 |
 | [OpenClaw](https://openclaw.ai) | `.claude/skills/` | `openclaw`（管理员） | `/she-love-me` |
 | [Cursor](https://cursor.sh) | `.agents/skills/` | 打开项目文件夹 | `/she-love-me` |
 | [GitHub Copilot](https://github.com/features/copilot) | `.agents/skills/` | 打开 VS Code | `/she-love-me` |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `.agents/skills/` | `gemini` | `/she-love-me` |
 
-> Skill 文件位于 `.claude/skills/she-love-me/SKILL.md`（Claude Code / OpenClaw）和 `.agents/skills/she-love-me/SKILL.md`（通用格式）；Codex 使用根目录 `AGENTS.md` 作为项目级指令入口。
+> Skill 文件位于 `.claude/skills/she-love-me/SKILL.md`（Claude Code / OpenClaw）和 `.agents/skills/she-love-me/SKILL.md`（通用格式），Agent 会自动识别。
 
 ### 运行
 
-Claude / Cursor / Copilot / Gemini CLI:
-
 ```
 /she-love-me
-```
-
-Codex:
-
-```text
-运行 she-love-me 工作流
 ```
 
 **就这些。** Skill 会自动处理一切：
@@ -168,7 +158,6 @@ HTML 报告（暗色现代风格）+ Markdown 摘要
 
 ```
 she-love-me/
-├── AGENTS.md                   # Codex 项目级指令入口
 ├── .claude/
 │   ├── settings.json           # Skill 注册配置
 │   └── skills/
