@@ -218,6 +218,18 @@ she-love-me/
 
 ---
 
+## 交流群
+
+<div align="center">
+
+<img src="assets/jiaoliuqun.jpg" width="220" alt="微信交流群" />
+
+*扫码加入微信交流群，遇到问题、分享鉴定结果都可以聊*
+
+</div>
+
+---
+
 <div align="center">
 
 **MIT License © 2026 她爱你吗？舔狗鉴定所**
