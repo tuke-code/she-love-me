@@ -1717,6 +1717,9 @@ def render_html(stats, analysis, contact_name):
 </main>
 
 <footer class="footer">
+  <p style="margin:0 0 14px;font-size:14px;line-height:1.9;color:var(--text-muted);max-width:620px;margin-left:auto;margin-right:auto;font-style:italic;opacity:.85;">
+    代码是冰冷的规则，但爱是流动的温热。任何算法都无法定义真正的双向奔赴，愿你拥有看破迷局的智慧，更有去真诚拥抱现实的勇气。答案，永远在你们彼此的心里。
+  </p>
   仅供参考 · 数据本地处理，不上传任何服务器 · 她爱你吗？恋情分析室 · {date_str}
 </footer>
 
