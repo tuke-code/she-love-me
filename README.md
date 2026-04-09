@@ -211,6 +211,20 @@ she-love-me/
 
 ---
 
+## 社区支持
+
+<div align="center">
+
+**学 AI，上 L 站**
+
+[![LINUX DO](https://img.shields.io/badge/LINUX%20DO-社区支持-blue?style=for-the-badge)](https://linux.do)
+
+本项目在 [LINUX DO](https://linux.do) 社区发布与交流，感谢佬友们的支持与反馈。
+
+</div>
+
+---
+
 ## 致谢
 
 本项目的微信数据库解密能力完全来自：
