@@ -55,6 +55,9 @@
 |:---:|:---:|:---:|
 | ![成分表](assets/preview-ingredients.png) | ![数据](assets/preview-stats.png) | ![图表](assets/preview-charts.png) |
 
+| 最终鉴定结果 |
+|:---:|
+| ![鉴定结果](assets\result.png) |
 ---
 
 ## 功能特性
