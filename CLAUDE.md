@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目简介
 
-**她爱你吗？舔狗鉴定所** 是一个通用 Agent Skill，通过解密本地微信数据库、分析聊天记录，结合心理学框架生成恋爱关系鉴定报告。所有数据处理均在本地完成，不上传任何服务器。
+**她爱你吗？恋情分析室** 是一个通用 Agent Skill，通过解密本地微信数据库、分析聊天记录，结合心理学框架生成恋爱关系分析报告。所有数据处理均在本地完成，不上传任何服务器。
 
 主入口：`/she-love-me`（Skill 命令）
 

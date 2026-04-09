@@ -1471,7 +1471,7 @@ def render_html(stats, analysis, contact_name):
 
 <!-- Hero -->
 <header class="hero">
-  <p class="hero-eyebrow">她爱你吗？· 恋爱关系深度分析</p>
+  <p class="hero-eyebrow">她爱你吗？· 恋情分析室</p>
   <h1 class="hero-title">她爱你吗？</h1>
   <p class="hero-contact">与 <span>{escape_html(contact_name)}</span> 的聊天记录</p>
   <p class="hero-date">{date_range[0]} — {date_range[1]} · {total_days} 天 · {basic.get('total_messages', 0):,} 条消息</p>
@@ -1704,7 +1704,7 @@ def render_html(stats, analysis, contact_name):
     <p class="section-label">最终鉴定</p>
     <div class="verdict-card">
       <div class="verdict-meta-row">
-        <span class="verdict-type-badge">恋爱关系鉴定 · 深度报告</span>
+        <span class="verdict-type-badge">恋情分析室 · 深度分析报告</span>
         {f'<span class="verdict-trend-badge">{trend_icon} {relationship_trend}</span>' if relationship_trend else ''}
       </div>
       <div class="verdict-type">{relationship_type}</div>
@@ -1717,7 +1717,7 @@ def render_html(stats, analysis, contact_name):
 </main>
 
 <footer class="footer">
-  仅供参考 · 数据本地处理，不上传任何服务器 · 她爱你吗？恋爱关系分析 · {date_str}
+  仅供参考 · 数据本地处理，不上传任何服务器 · 她爱你吗？恋情分析室 · {date_str}
 </footer>
 
 <script>
