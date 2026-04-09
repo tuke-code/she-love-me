@@ -10,7 +10,7 @@
 <br/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg?style=flat-square)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows-0078d4.svg?style=flat-square)]()
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-0078d4.svg?style=flat-square)]()
 [![WeChat](https://img.shields.io/badge/WeChat-4.0%2B-07c160.svg?style=flat-square)]()
 [![Agent Skill](https://img.shields.io/badge/Universal-Agent%20Skill-d97706.svg?style=flat-square)](https://github.com/863401402/she-love-me)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-✓-d97706.svg?style=flat-square)](https://claude.ai/code)
@@ -80,9 +80,10 @@
 
 ### 前置条件
 
-- Windows 系统 + WeChat 4.0+（**必须处于登录运行状态**）
+- Windows / macOS + WeChat 4.0+（**必须处于登录运行状态**）
 - 任意一个支持 Skill 的 AI 编程工具（见下方）
-- 以**管理员身份**打开终端（解密需要读取进程内存）
+- Windows 需要使用**管理员终端**
+- macOS 请确保终端具备必要系统权限，并按上游解密器提示授权
 
 ### 安装
 
@@ -95,11 +96,11 @@ cd she-love-me
 
 | 工具 | Skill 格式 | 启动命令 | 运行命令 |
 |------|-----------|----------|----------|
-| [Claude Code](https://claude.ai/code) | `.claude/skills/` | `claude`（管理员） | `/she-love-me` |
+| [Claude Code](https://claude.ai/code) | `.claude/skills/` | `claude` | `/she-love-me` |
 | [OpenClaw](https://openclaw.ai) | `.claude/skills/` | `openclaw`（管理员） | `/she-love-me` |
 | [Cursor](https://cursor.sh) | `.agents/skills/` | 打开项目文件夹 | `/she-love-me` |
 | [GitHub Copilot](https://github.com/features/copilot) | `.agents/skills/` | 打开 VS Code | `/she-love-me` |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `.agents/skills/` | `gemini`（管理员） | `/she-love-me` |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `.agents/skills/` | `gemini` | `/she-love-me` |
 
 > Skill 文件位于 `.claude/skills/she-love-me/SKILL.md`（Claude Code / OpenClaw）和 `.agents/skills/she-love-me/SKILL.md`（通用格式），Agent 会自动识别。
 
@@ -114,7 +115,7 @@ cd she-love-me
 ```
 /she-love-me
   ↓
-检查环境 → 自动 clone wechat-decrypt → pip install 依赖
+运行 setup_check.py → 自动 clone wechat-decrypt → pip install 依赖
   ↓
 扫描微信内存 → 提取密钥 → 解密 19 个数据库
   ↓
@@ -167,6 +168,8 @@ she-love-me/
 │       └── she-love-me/
 │           └── SKILL.md        # Skill 入口（Cursor / Copilot / Gemini CLI）
 ├── scripts/
+│   ├── setup_check.py          # 跨平台环境检查 / 依赖准备 / 微信进程检测
+│   ├── decrypt_wechat.py       # 跨平台解密入口（macOS 走 C 扫描器）
 │   ├── list_contacts.py        # 列出联系人（按消息数排序）
 │   ├── extract_messages.py     # 提取指定联系人全部消息
 │   ├── stats_analyzer.py       # 统计分析引擎（舔狗指数计算）
@@ -186,7 +189,7 @@ she-love-me/
 | 平台 | 状态 | 备注 |
 |------|------|------|
 | Windows | ✅ 支持 | 需要管理员终端 |
-| macOS | 🔜 规划中 | wechat-decrypt 已支持，适配中 |
+| macOS | 🧪 实验性支持 | 依赖上游 wechat-decrypt、ad-hoc 签名与本机权限配置 |
 | Linux | 🔜 规划中 | wechat-decrypt 已支持，适配中 |
 
 ---
@@ -194,7 +197,7 @@ she-love-me/
 ## 版本规划
 
 - **v1.0**（当前）：文字消息分析 · HTML 报告 · 舔狗/被爱/冷淡指数
-- **v2.0**（规划）：语音消息转文字分析 · 图片表情包分析 · macOS/Linux 支持
+- **v2.0**（规划）：语音消息转文字分析 · 图片表情包分析 · Linux 支持完善
 
 ---
 
