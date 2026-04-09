@@ -27,3 +27,6 @@ Thumbs.db
 .claude/settings.local.json
 # 外部安装的 skills（不入库）
 .claude/skills/web-design-guidelines/
+# Universal agent skills 目录 —— 只排除外部安装的，保留自己的
+.agents/skills/web-design-guidelines/
+skills-lock.json

@@ -1,18 +1,20 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/她爱你吗？-舔狗鉴定所-ff69b4?style=for-the-badge&logo=wechat&logoColor=white" alt="她爱你吗？舔狗鉴定所" />
+<img src="https://img.shields.io/badge/%F0%9F%90%BE_she--love--me-Agent_Skill-ff69b4?style=for-the-badge&logo=wechat&logoColor=white" alt="she-love-me · Agent Skill" />
 
 <br/>
 <br/>
 
-**用大数据和 AI，帮你从微信聊天记录里找到答案。**
+**用 AI，帮你从微信聊天记录里找到答案。**
 
 <br/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078d4.svg?style=flat-square)]()
 [![WeChat](https://img.shields.io/badge/WeChat-4.0%2B-07c160.svg?style=flat-square)]()
-[![Powered by Claude](https://img.shields.io/badge/Powered%20by-Claude%20Code-d97706.svg?style=flat-square)](https://claude.ai/code)
+[![Agent Skill](https://img.shields.io/badge/Universal-Agent%20Skill-d97706.svg?style=flat-square)](https://github.com/863401402/she-love-me)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-✓-d97706.svg?style=flat-square)](https://claude.ai/code)
+[![Cursor](https://img.shields.io/badge/Cursor-✓-000000.svg?style=flat-square)](https://cursor.sh)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/863401402/she-love-me/pulls)
 
 <br/>
@@ -25,7 +27,7 @@
 
 ## 简介
 
-**她爱你吗？** 是一个运行在 [Claude Code](https://claude.ai/code) 里的 Skill。
+**她爱你吗？** 是一个**通用 Agent Skill**，支持 Claude Code、Cursor、GitHub Copilot、Gemini CLI 等主流 AI 编程工具。
 
 只需要一条命令 `/she-love-me`，它就能自动解密你的微信数据库、分析你和某个联系人的全部聊天记录，然后告诉你：**你到底有多舔，她到底爱不爱你。**
 
@@ -76,7 +78,7 @@
 ### 前置条件
 
 - Windows 系统 + WeChat 4.0+（**必须处于登录运行状态**）
-- [Claude Code](https://claude.ai/code) 已安装
+- 任意一个支持 Skill 的 AI 编程工具（见下方）
 - 以**管理员身份**打开终端（解密需要读取进程内存）
 
 ### 安装
@@ -84,8 +86,19 @@
 ```bash
 git clone https://github.com/863401402/she-love-me
 cd she-love-me
-claude   # 以管理员身份启动 Claude Code
 ```
+
+根据你使用的 AI 工具，启动对应的 Agent：
+
+| 工具 | Skill 格式 | 启动命令 | 运行命令 |
+|------|-----------|----------|----------|
+| [Claude Code](https://claude.ai/code) | `.claude/skills/` | `claude`（管理员） | `/she-love-me` |
+| [OpenClaw](https://openclaw.ai) | `.claude/skills/` | `openclaw`（管理员） | `/she-love-me` |
+| [Cursor](https://cursor.sh) | `.agents/skills/` | 打开项目文件夹 | `/she-love-me` |
+| [GitHub Copilot](https://github.com/features/copilot) | `.agents/skills/` | 打开 VS Code | `/she-love-me` |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `.agents/skills/` | `gemini`（管理员） | `/she-love-me` |
+
+> Skill 文件位于 `.claude/skills/she-love-me.md`（Claude Code / OpenClaw）和 `.agents/skills/she-love-me/SKILL.md`（通用格式），Agent 会自动识别。
 
 ### 运行
 
