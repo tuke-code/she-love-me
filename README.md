@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/%F0%9F%90%BE_she--love--me-Agent_Skill-ff69b4?style=for-the-badge&logo=wechat&logoColor=white" alt="she-love-me · Agent Skill" />
+<img height="40" src="https://img.shields.io/badge/%E5%A5%B9%E7%88%B1%E4%BD%A0%E5%90%97%EF%BC%9F-%E8%88%94%E7%8B%97%E9%89%B4%E5%AE%9A%E6%89%80%20%C2%B7%20Skill-ff69b4?style=for-the-badge&logo=wechat&logoColor=white" alt="她爱你吗？舔狗鉴定所 · Skill" />
 
 <br/>
 <br/>
