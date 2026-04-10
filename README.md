@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="她爱你吗？恋情分析室" width="860" />
+<img src="assets/banner.svg" alt="她爱我吗？恋情分析室" width="860" />
 
 <br/>
 
@@ -22,7 +22,7 @@
 
 ## 简介
 
-**她爱你吗？** 是一个**通用 Agent Skill**，支持 Claude Code、Codex、Cursor、GitHub Copilot、Gemini CLI 等主流 AI 编程工具。
+**她爱我吗？** 是一个**通用 Agent Skill**，支持 Claude Code、Codex、Cursor、GitHub Copilot、Gemini CLI 等主流 AI 编程工具。
 
 只需要一句调用指令（例如 Claude 里输入 `/she-love-me`，Codex 里输入 `$she-love-me`），它就能自动解密你的微信数据库（或通过 QCE 提取 QQ 记录）、分析你和某个联系人的全部聊天记录，然后告诉你：**这段关系里，谁更在意？她真的爱你吗？**
 
@@ -319,7 +319,7 @@ she-love-me/
 
 <div align="center">
 
-**MIT License © 2026 她爱你吗？恋情分析室**
+**MIT License © 2026 她爱我吗？恋情分析室**
 
 *如果这个项目帮你想通了什么，记得给个 ⭐*
 
