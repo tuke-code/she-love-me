@@ -570,7 +570,55 @@ def render_language_patterns(lang_patterns, linguistic_stats, contact_name):
     </div>"""
 
 
-def render_html(stats, analysis, contact_name):
+def render_patriarch_wisdom(wisdom):
+    """渲染祖师爷寄语（童锦程视角）"""
+    if not wisdom:
+        return ""
+
+    situation = escape_html(wisdom.get("situation_read", ""))
+    tactics   = wisdom.get("advance_tactics", [])
+    mistake   = escape_html(wisdom.get("fatal_mistake", ""))
+    quote     = escape_html(wisdom.get("closing_quote", ""))
+
+    tactics_html = ""
+    for i, t in enumerate(tactics, 1):
+        title  = escape_html(t.get("title", ""))
+        logic  = escape_html(t.get("logic", ""))
+        action = escape_html(t.get("action", ""))
+        tactics_html += f"""
+        <div class="patriarch-tactic">
+          <div class="patriarch-tactic-num">{i:02d}</div>
+          <div class="patriarch-tactic-body">
+            <div class="patriarch-tactic-title">「{title}」</div>
+            {f'<p class="patriarch-tactic-logic">{logic}</p>' if logic else ''}
+            {f'<div class="patriarch-tactic-action">怎么做：{action}</div>' if action else ''}
+          </div>
+        </div>"""
+
+    return f"""
+    <div class="patriarch-wrap">
+      <div class="patriarch-avatar-row">
+        <div class="patriarch-avatar">👴</div>
+        <div class="patriarch-identity">
+          <div class="patriarch-name">童锦程 · 深情祖师爷</div>
+          <div class="patriarch-subtitle">街头智慧 · 真诚才是最高级的套路</div>
+        </div>
+      </div>
+
+      {f'<div class="patriarch-read"><span class="patriarch-read-label">读局</span><p class="patriarch-read-text">{situation}</p></div>' if situation else ''}
+
+      {f'<div class="patriarch-tactics-title">三条实招</div><div class="patriarch-tactics">{tactics_html}</div>' if tactics_html else ''}
+
+      {f'''<div class="patriarch-mistake">
+        <div class="patriarch-mistake-label">⚠️ 必须改掉的一件事</div>
+        <p class="patriarch-mistake-text">{mistake}</p>
+      </div>''' if mistake else ''}
+
+      {f'<blockquote class="patriarch-quote">「{quote}」</blockquote>' if quote else ''}
+    </div>"""
+
+
+
     scores    = stats.get("scores", {})
     simp      = scores.get("simp_index", 0)
     loved     = scores.get("loved_index", 0)
@@ -602,6 +650,7 @@ def render_html(stats, analysis, contact_name):
     lang_patterns_html     = render_language_patterns(
         analysis.get("language_patterns"), linguistic_stats, contact_name
     )
+    patriarch_wisdom_html  = render_patriarch_wisdom(analysis.get("patriarch_wisdom"))
 
     chart = build_chart_data(stats)
     chart_data_js = json.dumps(chart, ensure_ascii=False)
@@ -1465,6 +1514,160 @@ def render_html(stats, analysis, contact_name):
   .asym-turning-label {{ font-size: 11px; font-weight: 600; color: #eab308; letter-spacing: .06em; }}
   .asym-turning-date {{ font-size: 11px; color: var(--text-subtle); margin-left: 8px; }}
   .asym-turning-event {{ font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.6; }}
+
+  /* ── Patriarch Wisdom ── */
+  .patriarch-wrap {{
+    background: linear-gradient(135deg, rgba(251,191,36,.05) 0%, rgba(245,158,11,.03) 100%);
+    border: 1px solid rgba(251,191,36,.2);
+    border-left: 3px solid #f59e0b;
+    border-radius: var(--radius);
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }}
+  .patriarch-wrap::before {{
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(251,191,36,.08) 0%, transparent 70%);
+    pointer-events: none;
+  }}
+  .patriarch-avatar-row {{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+  }}
+  .patriarch-avatar {{
+    font-size: 36px;
+    width: 56px;
+    height: 56px;
+    background: rgba(251,191,36,.1);
+    border: 1px solid rgba(251,191,36,.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }}
+  .patriarch-name {{
+    font-size: 15px;
+    font-weight: 700;
+    color: #f59e0b;
+    margin-bottom: 4px;
+  }}
+  .patriarch-subtitle {{
+    font-size: 11px;
+    color: var(--text-subtle);
+    letter-spacing: .04em;
+  }}
+  .patriarch-read {{
+    background: rgba(0,0,0,.2);
+    border: 1px solid rgba(251,191,36,.12);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }}
+  .patriarch-read-label {{
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #f59e0b;
+    margin-bottom: 8px;
+    display: block;
+  }}
+  .patriarch-read-text {{
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.8;
+    font-style: italic;
+  }}
+  .patriarch-tactics-title {{
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(251,191,36,.6);
+    margin-bottom: 12px;
+  }}
+  .patriarch-tactics {{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }}
+  .patriarch-tactic {{
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 12px;
+    align-items: start;
+    background: rgba(0,0,0,.15);
+    border: 1px solid rgba(251,191,36,.1);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }}
+  .patriarch-tactic-num {{
+    font-size: 11px;
+    font-weight: 800;
+    color: #f59e0b;
+    font-variant-numeric: tabular-nums;
+    padding-top: 2px;
+  }}
+  .patriarch-tactic-title {{
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }}
+  .patriarch-tactic-logic {{
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 8px;
+  }}
+  .patriarch-tactic-action {{
+    font-size: 12px;
+    color: #f59e0b;
+    background: rgba(245,158,11,.08);
+    border: 1px solid rgba(245,158,11,.15);
+    border-radius: 6px;
+    padding: 8px 12px;
+    line-height: 1.6;
+  }}
+  .patriarch-mistake {{
+    background: rgba(239,68,68,.05);
+    border: 1px solid rgba(239,68,68,.15);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }}
+  .patriarch-mistake-label {{
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: #ef4444;
+    margin-bottom: 8px;
+  }}
+  .patriarch-mistake-text {{
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }}
+  .patriarch-quote {{
+    font-size: 15px;
+    font-weight: 600;
+    color: #f59e0b;
+    font-style: italic;
+    text-align: center;
+    border: none;
+    padding: 0;
+    margin: 0;
+    line-height: 1.7;
+    opacity: .9;
+  }}
 </style>
 </head>
 <body>
@@ -1690,6 +1893,12 @@ def render_html(stats, analysis, contact_name):
     <p class="section-label">🎯 军师建议</p>
     {strategist_html}
   </section>
+
+  <!-- 祖师爷寄语 -->
+  {f'''<section class="section">
+    <p class="section-label">👴 祖师爷寄语 · 童锦程</p>
+    {patriarch_wisdom_html}
+  </section>''' if patriarch_wisdom_html else ''}
 
   <!-- 鉴定发现 -->
   <section class="section">

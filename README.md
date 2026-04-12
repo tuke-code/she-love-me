@@ -1,6 +1,6 @@
-<div align="center">
+<div align=”center”>
 
-<img src="assets/banner.svg" alt="她爱我吗？恋情分析室" width="860" />
+<img src=”assets/banner.svg” alt=”她爱我吗？恋情分析室” width=”860” />
 
 <br/>
 
@@ -29,6 +29,8 @@
 v2.0 起融入专业心理学框架，不只给结论——还做**依恋类型诊断**、**Gottman 关系健康检测**、**危险信号预警**，并以军师身份给出具体可执行的建议。
 
 v2.2 起支持 **QQ 聊天记录分析**（通过 [QQ Chat Exporter](https://github.com/shuakami/qq-chat-exporter)），微信与 QQ 统一流程，同一份报告。
+
+**v2.3（当前）** 重磅上线 👴 **祖师爷寄语**——融入深情祖师爷童锦程的街头智慧，从「吸引力原则」「给台阶」「不当舔狗」三大维度，告诉你以后该怎么做，才能更快推进关系、让她喜欢上你、在亲密关系里保持自己的地位。**人人都是祖师爷。**
 
 > 分析全程在本地运行，数据不上传任何服务器。
 
@@ -67,18 +69,41 @@ v2.2 起支持 **QQ 聊天记录分析**（通过 [QQ Chat Exporter](https://git
 | 👥 **联系人选择** | 按消息数量排列，选你想分析的那个人 |
 | 📊 **主动指数** | 主动发起占比 · 连续轰炸次数 · 回复速度差 · 消息长度比 |
 | 💜 **被爱指数** | 对方主动次数 · 晚安/早安分析 · 关心频率 |
-| 🧊 **冷淡检测** | "嗯""哦""好" 占比 · 长时间已读不回统计 |
+| 🧊 **冷淡检测** | “嗯””哦””好” 占比 · 长时间已读不回统计 |
 | 📊 **话语权分析** | 谁在主导对话，谁在迎合；权力动态量化 |
 | 📈 **趋势图表** | 每日消息量 · 活跃时段 · 双方占比（Chart.js） |
 | 🧠 **依恋类型诊断** | 安全型 / 焦虑型 / 回避型 / 恐惧型，双方都分析 |
-| 🔄 **追逃循环复盘** | 还原完整"案发现场"：触发→撤退→升级→恶化 |
+| 🔄 **追逃循环复盘** | 还原完整”案发现场”：触发→撤退→升级→恶化 |
 | 💘 **Sternberg 三角** | 激情 · 亲密 · 承诺三维评分，判断爱情类型 |
 | 🩹 **修复尝试分析** | 冷战后谁低头？对方接受还是继续惩罚？ |
 | 💡 **情感可得性评估** | 对方此刻是否真的有能力投入这段关系 |
 | ⚠️ **危险预警** | 煤气灯效应 · 爱情轰炸 · 间歇性强化 · 单相思痴迷等 7 类信号 |
 | 🎯 **军师模式** | 核心诊断 + 停止/开始建议（含时机）+ 路线图 + **止损红线** |
+| 👴 **祖师爷寄语** ✨ | 童锦程视角 · 读局 + 推进关系三条实招 + 关系地位指南 + 金句收尾 |
 | 🔍 **AI 深度鉴定** | Agent 读取全量消息，结合统计数据给出有洞察力的结论 |
 | 📄 **双格式输出** | 终端 Markdown 摘要 + 可分享的 HTML 报告 |
+
+---
+
+## ✨ v2.3 新特性：祖师爷寄语
+
+> *”没有人会因为你喜欢她而喜欢你，别人只会因为你吸引她而喜欢你。”*
+> *—— 童锦程*
+
+v2.3 融入了深情祖师爷**童锦程**的心智模型，在完成专业心理学分析（军师建议）之后，再从街头实战视角给出一套完全独立的行动方案：
+
+**读局** — 童锦程第一人称，直接点评你这段关系的核心问题，不绕弯子。
+
+**三条实招** — 基于他的三个核心原则，针对你的聊天记录个性化生成：
+- `01` **让她对你产生吸引**（吸引力 > 讨好原则）
+- `02` **给她台阶推进关系**（给台阶原则 + 具体时机）
+- `03` **保持你在关系中的地位**（充实自己 + 不当舔狗）
+
+**必须改掉的一件事** — 从你的聊天记录里找出最损害自身价值感的行为，直接点破，给出正确做法。
+
+**金句收尾** — 一句最契合当前局面的祖师爷语录。
+
+军师建议是心理学视角（**为什么**），祖师爷寄语是街头智慧视角（**怎么做**）——两套逻辑，一份报告，一个都不少。
 
 ---
 
@@ -112,7 +137,7 @@ cd she-love-me
 |------|-----------|----------|----------|
 | [Claude Code](https://claude.ai/code) | `.claude/skills/` | `claude` | `/she-love-me` |
 | [OpenClaw](https://openclaw.ai) | `.claude/skills/` | `openclaw`（管理员） | `/she-love-me` |
-| [Codex](https://developers.openai.com/codex/overview) | `.agents/skills/` + `AGENTS.md` | 打开项目，或在仓库根目录运行 `codex` | `$she-love-me`，或直接说“使用 she-love-me 分析聊天记录” |
+| [Codex](https://developers.openai.com/codex/overview) | `.agents/skills/` + `AGENTS.md` | 打开项目，或在仓库根目录运行 `codex` | `$she-love-me`，或直接说”使用 she-love-me 分析聊天记录” |
 | [Cursor](https://cursor.sh) | `.agents/skills/` | 打开项目文件夹 | `/she-love-me` |
 | [GitHub Copilot](https://github.com/features/copilot) | `.agents/skills/` | 打开 VS Code | `/she-love-me` |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `.agents/skills/` | `gemini` | `/she-love-me` |
@@ -149,7 +174,7 @@ $she-love-me
   ↓
 提取消息 → 统计计算 → AI 深度鉴定
   ↓
-关系诊断 · 依恋类型 · 危险预警 · 军师建议
+关系诊断 · 依恋类型 · 危险预警 · 军师建议 · 👴 祖师爷寄语
   ↓
 生成 HTML 报告 + 终端摘要
 ```
@@ -164,7 +189,7 @@ $she-love-me
   ↓
 提取消息 → 统计计算 → AI 深度鉴定
   ↓
-关系诊断 · 依恋类型 · 危险预警 · 军师建议
+关系诊断 · 依恋类型 · 危险预警 · 军师建议 · 👴 祖师爷寄语
   ↓
 生成 HTML 报告 + 终端摘要
 ```
@@ -191,6 +216,7 @@ wechat-decrypt（自动 clone）
     │
     │  AI Agent：Sternberg 三角 · Gottman 四骑士 · 依恋类型
     │            权力动态 · 情感可得性 · 危险预警 · 军师建议
+    │            👴 祖师爷寄语（童锦程视角）
     ▼
 HTML 报告（暗色现代风格）+ Markdown 摘要
 ```
@@ -232,6 +258,10 @@ she-love-me/
 │           ├── SKILL.md        # Skill 入口（Codex / Cursor / Copilot / Gemini CLI）
 │           └── agents/
 │               └── openai.yaml # Codex 元数据（显示名 / 默认提示 / 品牌色）
+├── references/
+│   └── tong-jincheng/          # 童锦程心智模型参考材料（v2.3 新增）
+│       ├── SKILL.md            # 核心模型、决策启发式、表达 DNA
+│       └── research/           # 一手语录与行为分析
 ├── scripts/
 │   ├── setup_check.py          # 跨平台环境检查 / 依赖准备 / 微信进程检测
 │   ├── decrypt_wechat.py       # 跨平台解密入口（macOS 走 C 扫描器）
@@ -266,14 +296,15 @@ she-love-me/
 - **v1.0**：文字消息分析 · HTML 报告 · 主动/被爱/冷淡指数
 - **v2.0**：依恋类型诊断 · Sternberg 三角 · Gottman 四骑士 · 危险预警 · 军师模式
 - **v2.1**：核心恐惧分析 · 情感可得性评估 · 权力动态量化 · 修复尝试分析 · 追逃循环复盘 · 止损红线 · 时机指引
-- **v2.2**（当前）：**QQ 聊天记录支持**（通过 QQ Chat Exporter API）· 微信/QQ 统一分析管线 · 无需解密直接通过 API 导出
+- **v2.2**：**QQ 聊天记录支持**（通过 QQ Chat Exporter API）· 微信/QQ 统一分析管线
+- **v2.3**（当前）：👴 **祖师爷寄语**（童锦程视角）· 推进关系三条实招 · 关系地位指南 · 人人都是祖师爷
 - **v3.0**（规划）：语音消息转文字分析 · 图片表情包分析 · Linux 支持完善
 
 ---
 
 ## 社区支持
 
-<div align="center">
+<div align=”center”>
 
 **学 AI，上 L 站**
 
@@ -294,6 +325,19 @@ she-love-me/
 > WeChat 4.0 database decryptor — 通过内存扫描提取 SQLCipher4 密钥，实时解密微信数据库。
 > 没有这个项目，本工具无从实现。感谢作者的开源贡献 🙏
 
+QQ 聊天记录导出能力来自：
+
+> **[shuakami/qq-chat-exporter](https://github.com/shuakami/qq-chat-exporter)**
+>
+> NapCat + QCE 插件方案，通过 REST API 导出 QQ 聊天记录，让 QQ 用户同样可以享受完整的分析流程。感谢作者的开源贡献 🙏
+
+v2.3 祖师爷寄语的心智模型与一手语录来自：
+
+> **[hotcoffeeshake/tong-jincheng-skill](https://github.com/hotcoffeeshake/tong-jincheng-skill)**
+>
+> 深情祖师爷童锦程的完整人际智慧框架——吸引力原则、给台阶、真诚才是最高级的套路。
+> 感谢 hotcoffeeshake 整理了这套高质量的街头智慧素材，让祖师爷的精髓能融入分析报告 🙏
+
 ---
 
 ## 免责声明
@@ -307,9 +351,9 @@ she-love-me/
 
 ## 交流群
 
-<div align="center">
+<div align=”center”>
 
-<img src="assets/jiaoliuqun.jpg" width="220" alt="微信交流群" />
+<img src=”assets/jiaoliuqun.jpg” width=”220” alt=”微信交流群” />
 
 *扫码加入微信交流群，遇到问题、分享鉴定结果、更新优化方向都可以聊*
 
@@ -317,10 +361,11 @@ she-love-me/
 
 ---
 
-<div align="center">
+<div align=”center”>
 
 **MIT License © 2026 她爱我吗？恋情分析室**
 
 *如果这个项目帮你想通了什么，记得给个 ⭐*
 
 </div>
+
