@@ -77,7 +77,7 @@
           font-family="'PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif"
           font-size="46" font-weight="700" text-anchor="middle"
           fill="url(#titleGrad)"
-          filter="url(#textShadow)">她不一样</text>
+          filter="url(#textShadow)">她不一样.Skill</text>
 
     <!-- 分割线 -->
     <line x1="220" y1="104" x2="640" y2="104" stroke="url(#lineGrad)" stroke-width="1.5"/>
