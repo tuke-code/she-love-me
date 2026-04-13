@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="她不一样" width="860" />
+<img src="assets/banner.svg" alt="她不一样.Skill" width="860" />
 
 <br/>
 
