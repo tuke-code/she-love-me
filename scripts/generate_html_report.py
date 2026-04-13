@@ -671,7 +671,7 @@ def render_patriarch_wisdom(wisdom):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>她爱我吗 · {escape_html(contact_name)}</title>
+<title>她不一样 · {escape_html(contact_name)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -1674,8 +1674,8 @@ def render_patriarch_wisdom(wisdom):
 
 <!-- Hero -->
 <header class="hero">
-  <p class="hero-eyebrow">她爱我吗？· 恋情分析室</p>
-  <h1 class="hero-title">她爱我吗？</h1>
+  <p class="hero-eyebrow">深度关系分析</p>
+  <h1 class="hero-title">她不一样</h1>
   <p class="hero-contact">与 <span>{escape_html(contact_name)}</span> 的聊天记录</p>
   <p class="hero-date">{date_range[0]} — {date_range[1]} · {total_days} 天 · {basic.get('total_messages', 0):,} 条消息</p>
 </header>
@@ -1687,7 +1687,7 @@ def render_patriarch_wisdom(wisdom):
     <p class="section-label">鉴定指数</p>
     <div class="score-grid">
       <div class="score-card simp">
-        <div class="score-emoji">🐶</div>
+        <div class="score-emoji">🔥</div>
         <div class="score-label">主动指数</div>
         <div class="score-value">{simp}</div>
         <div class="score-bar"><div class="score-bar-fill" style="width:{simp}%"></div></div>
@@ -1913,7 +1913,7 @@ def render_patriarch_wisdom(wisdom):
     <p class="section-label">最终鉴定</p>
     <div class="verdict-card">
       <div class="verdict-meta-row">
-        <span class="verdict-type-badge">恋情分析室 · 深度分析报告</span>
+        <span class="verdict-type-badge">她不一样 · 深度分析报告</span>
         {f'<span class="verdict-trend-badge">{trend_icon} {relationship_trend}</span>' if relationship_trend else ''}
       </div>
       <div class="verdict-type">{relationship_type}</div>
@@ -1934,7 +1934,7 @@ def render_patriarch_wisdom(wisdom):
     放下这份冰冷的报告，去现实里，用真心换真心。<br>
     爱情从来不需要算法背书，它只需要你，开口。
   </p>
-  仅供参考 · 数据本地处理，不上传任何服务器 · 她爱我吗？恋情分析室 · {date_str}
+  仅供参考 · 数据本地处理，不上传任何服务器 · <a href="https://github.com/863401402/she-love-me" target="_blank" style="color:inherit;opacity:.6;text-decoration:none;">她不一样 · 开源地址</a> · {date_str}
 </footer>
 
 <script>
