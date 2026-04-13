@@ -66,13 +66,29 @@ def render_danger_warnings(danger_warnings):
         level   = w.get("level", "中危")
         evidence = escape_html(w.get("evidence", ""))
         color, bg, border = level_colors.get(level, ("#6b7280", "rgba(107,114,128,.12)", "rgba(107,114,128,.25)"))
+
+        # 构建证据内容：优先使用 trigger_met / trigger_status 双阈值结构，回退到 evidence
+        trigger_met = w.get("trigger_met") or w.get("trigger_status") or {}
+        quantitative = escape_html(trigger_met.get("quantitative", ""))
+        textual = escape_html(trigger_met.get("textual", ""))
+        note = escape_html(w.get("note", ""))
+
+        evidence_html = ""
+        if quantitative or textual:
+            evidence_html += f'<div class="warning-trigger"><span class="trigger-label">📊 量化</span>{quantitative}</div>' if quantitative else ""
+            evidence_html += f'<div class="warning-trigger"><span class="trigger-label">💬 文本</span>{textual}</div>' if textual else ""
+        elif evidence:
+            evidence_html = f'<p class="warning-evidence">{evidence}</p>'
+        if note:
+            evidence_html += f'<p class="warning-note">{note}</p>'
+
         items.append(f"""
         <div class="warning-card" style="border-color:{border};background:{bg};">
           <div class="warning-header">
             <span class="warning-type">{wtype}</span>
             <span class="warning-badge" style="color:{color};background:{bg};border-color:{border};">{level}</span>
           </div>
-          <p class="warning-evidence">{evidence}</p>
+          {evidence_html}
         </div>""")
     return "\n".join(items)
 
@@ -1727,11 +1743,6 @@ def render_patriarch_wisdom(wisdom):
         <span class="ingredient-name">🧊 冷淡成分</span>
         <div class="ingredient-track"><div class="ingredient-fill i-cold" style="width:{cold}%"></div></div>
         <span class="ingredient-pct">{cold}%</span>
-      </div>
-      <div class="ingredient-row">
-        <span class="ingredient-name">🔧 工具人成分</span>
-        <div class="ingredient-track"><div class="ingredient-fill i-tool" style="width:{max(0, simp - loved - 10)}%"></div></div>
-        <span class="ingredient-pct">{max(0, simp - loved - 10)}%</span>
       </div>
     </div>
   </section>

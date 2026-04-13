@@ -185,14 +185,14 @@ description: >-
 
 模块 F 是所有模块的基础——只有真正理解了「这两个人」，才能准确判断「这段关系」。
 
-> 📖 完整分析框架：读取 `references/analysis-framework.md`（模块 F + A + B）
-> 🚨 危险预警定义：读取 `references/risk-signals.md`（模块 C）
-> 🎯 军师与语气风格：读取 `references/strategist-guide.md`（模块 D + E + G）
-> 📋 输出 JSON schema：读取 `references/report-schema.md`
+> 📖 完整分析框架：读取 `.agents/skills/she-love-me/references/analysis-framework.md`（模块 F + A + B）
+> 🚨 危险预警定义：读取 `.agents/skills/she-love-me/references/risk-signals.md`（模块 C）
+> 🎯 军师与语气风格：读取 `.agents/skills/she-love-me/references/strategist-guide.md`（模块 D + E + G）
+> 📋 输出 JSON schema：读取 `.agents/skills/she-love-me/references/report-schema.md`
 
 **5 条执行铁律（不可忽略）**：
 1. **无证据不诊断** — 所有心理学推断必须引用带时间戳的原话作为锚点
-2. **高亮预警优先** — 危险预警仅当量化条件与文本条件同时满足时触发（见 `references/risk-signals.md` 双阈值规则）
+2. **高亮预警优先** — 危险预警仅当量化条件与文本条件同时满足时触发（见 `.agents/skills/she-love-me/references/risk-signals.md` 双阈值规则）
 3. **先叙事，后框架** — 描述鉴定师「看到」的画面，再引入理论名词
 4. **防御语言是金矿** — 「不合适」「随便」「来者不拒」永远追问：这句话保护了什么？想让对方做什么？
 5. **证据不足留白** — 对于 `partner_attachment`、`core_fear`、`trauma_bonding`、`future_faking`、`fatal_mistake`、`advancement_path` 等字段，若无充分证据支撑，输出 `{"value": null, "evidence_level": "insufficient", "reason": "..."}` 而非强行推断
@@ -213,7 +213,7 @@ description: >-
 
 用 Markdown 格式向用户展示鉴定摘要。
 
-> 📋 展示模板：读取 `references/report-template.md`
+> 📋 展示模板：读取 `.agents/skills/she-love-me/references/report-template.md`
 
 ---
 
