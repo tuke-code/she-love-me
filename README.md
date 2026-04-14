@@ -56,41 +56,38 @@
 
 ### 报告截图
 
-> 📸 *截图示例（以真实运行结果为准）*
-
-
-|                  成分表                  |             数据面板             |              趋势图表              |
-| :---------------------------------------: | :-------------------------------: | :--------------------------------: |
+| 成分表 | 数据面板 | 趋势图表 |
+|:---:|:---:|:---:|
 | ![成分表](assets/preview-ingredients.png) | ![数据](assets/preview-stats.png) | ![图表](assets/preview-charts.png) |
 
-
-|          最终鉴定结果          |
-| :----------------------------: |
+| 最终鉴定结果 |
+|:---:|
 | ![鉴定结果](assets/result.png) |
 
 ---
 
 ## 功能特性
 
-
-| 功能                 | 说明                                                          |
-| -------------------- | ------------------------------------------------------------- |
-| 🔓**自动解密**       | 自动 clone 并调用 wechat-decrypt，无需手动操作                |
-| 👥**联系人选择**     | 按消息数量排列，选你想分析的那个人                            |
-| 📊**主动指数**       | 主动发起占比 · 连续轰炸次数 · 回复速度差 · 消息长度比      |
-| 💜**被爱指数**       | 对方主动次数 · 晚安/早安分析 · 关心频率                     |
-| 🧊**冷淡检测**       | "嗯""哦""好" 占比 · 长时间已读不回统计                       |
-| 📊**话语权分析**     | 谁在主导对话，谁在迎合；权力动态量化                          |
-| 📈**趋势图表**       | 每日消息量 · 活跃时段 · 双方占比（Chart.js）                |
-| 🧠**依恋类型诊断**   | 安全型 / 焦虑型 / 回避型 / 恐惧型，双方都分析                 |
-| 🔄**追逃循环复盘**   | 还原完整"案发现场"：触发→撤退→升级→恶化                    |
-| 💘**Sternberg 三角** | 激情 · 亲密 · 承诺三维评分，判断爱情类型                    |
-| 🩹**修复尝试分析**   | 冷战后谁低头？对方接受还是继续惩罚？                          |
-| 💡**情感可得性评估** | 对方此刻是否真的有能力投入这段关系                            |
-| ⚠️**危险预警**     | 煤气灯效应 · 爱情轰炸 · 间歇性强化 · 单相思痴迷等 7 类信号 |
-| 🎯**军师模式**       | 核心诊断 + 停止/开始建议（含时机）+ 路线图 +**止损红线**      |
-| 🔍**AI 深度鉴定**    | Agent 读取全量消息，结合统计数据给出有洞察力的结论            |
-| 📄**双格式输出**     | 终端 Markdown 摘要 + 可分享的 HTML 报告                       |
+| 功能 | 说明 |
+|------|------|
+| 🔓 **自动解密** | 自动 clone 并调用 wechat-decrypt，无需手动操作 |
+| 👥 **联系人选择** | 按消息数量排列，选你想分析的那个人 |
+| 📊 **主动指数** | 主动发起占比 · 连续轰炸次数 · 回复速度差 · 消息长度比 |
+| 💜 **被爱指数** | 对方主动次数 · 晚安/早安分析 · 关心频率 |
+| 🧊 **冷淡检测** | "嗯""哦""好" 占比 · 长时间已读不回统计 |
+| 📊 **话语权分析** | 谁在主导对话，谁在迎合；权力动态量化 |
+| 📈 **趋势图表** | 每日消息量 · 活跃时段 · 双方占比（Chart.js） |
+| 🧠 **依恋类型诊断** | 安全型 / 焦虑型 / 回避型 / 恐惧型，双方都分析 |
+| 🔄 **追逃循环复盘** | 还原完整"案发现场"：触发→撤退→升级→恶化 |
+| 💘 **Sternberg 三角** | 激情 · 亲密 · 承诺三维评分，判断爱情类型 |
+| 🩹 **修复尝试分析** | 冷战后谁低头？对方接受还是继续惩罚？ |
+| 💡 **情感可得性评估** | 对方此刻是否真的有能力投入这段关系 |
+| ⚠️ **危险预警** | 7 类信号（煤气灯 · 爱情轰炸 · 间歇性强化 · 单相思痴迷等）· **双阈值触发**（量化+文本同时满足才高亮，否则降级为观察提示） |
+| 🎯 **军师模式** | 核心诊断 + 停止/开始建议（含时机）+ 路线图 + **止损红线** |
+| 👴 **祖师爷寄语** | 童锦程视角 · 读局 + 推进关系三条实招 + 关系地位指南 + 金句收尾 |
+| 🔍 **AI 深度鉴定** | 全量统计层（stats.json）+ 用户选定范围分层采样，三层架构避免"全量幻觉"，评分有推导来源不靠模型主观拍板 |
+| 🎯 **动态采样选择** | 自动推荐分析时间范围（1个月/3个月/半年/全量），展示每个选项的消息条数，由用户决定分析窗口 |
+| 📄 **双格式输出** | 终端 Markdown 摘要 + 可分享的 HTML 报告 |
 
 ---
 
@@ -110,25 +107,18 @@ $ curl -s https://raw.githubusercontent.com/863401402/she-love-me/main/GUIDE.md
 
 ---
 
-## 
+
 
 ### 前置条件
 
 **微信分析**：
-
 - Windows / macOS + WeChat 4.0+（**必须处于登录运行状态**）
 - Windows 需要使用**管理员终端**
 - macOS 请确保终端具备必要系统权限，并按上游解密器提示授权
 
-**QQ 分析（v2.2 新增）**：
-
+**QQ 分析**：
 - 安装并启动 [QQ Chat Exporter (QCE)](https://github.com/shuakami/qq-chat-exporter)（NapCat + QCE 插件）
 - 用手机 QQ 扫码登录，获取控制台显示的 Access Token
-- 无需管理员权限，无需解密步骤
-
-**通用**：
-
-- 任意一个支持 Skill 或 `AGENTS.md` 的 AI 编程工具（见下方）
 
 ### 安装与运行
 
@@ -137,77 +127,16 @@ git clone https://github.com/863401402/she-love-me
 cd she-love-me
 ```
 
-根据你使用的 AI 工具，启动对应的 Agent：
+| 工具 | 调用方式 |
+|------|----------|
+| [Claude Code](https://claude.ai/code) / [OpenClaw](https://openclaw.ai) / [Cursor](https://cursor.sh) / [Copilot](https://github.com/features/copilot) / [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `/she-love-me` |
+| [Codex](https://developers.openai.com/codex/overview) | `$she-love-me` 或直接说"使用 she-love-me 分析聊天记录" |
 
-
-| 工具                                                      | Skill 格式                      | 启动方式                            | 调用方式                                                  |
-| --------------------------------------------------------- | ------------------------------- | ----------------------------------- | --------------------------------------------------------- |
-| [Claude Code](https://claude.ai/code)                     | `.claude/skills/`               | `claude`                            | `/she-love-me`                                            |
-| [OpenClaw](https://openclaw.ai)                           | `.claude/skills/`               | `openclaw`（管理员）                | `/she-love-me`                                            |
-| [Codex](https://developers.openai.com/codex/overview)     | `.agents/skills/` + `AGENTS.md` | 打开项目，或在仓库根目录运行`codex` | `$she-love-me`，或直接说“使用 she-love-me 分析聊天记录” |
-| [Cursor](https://cursor.sh)                               | `.agents/skills/`               | 打开项目文件夹                      | `/she-love-me`                                            |
-| [GitHub Copilot](https://github.com/features/copilot)     | `.agents/skills/`               | 打开 VS Code                        | `/she-love-me`                                            |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `.agents/skills/`               | `gemini`                            | `/she-love-me`                                            |
-
-> Skill 文件位于 `.claude/skills/she-love-me/SKILL.md`（Claude Code / OpenClaw）和 `.agents/skills/she-love-me/SKILL.md`（Codex / Cursor / Copilot / Gemini CLI）。Codex 还会读取仓库根目录的 `AGENTS.md`，并识别 `.agents/skills/she-love-me/agents/openai.yaml` 中的元数据。
-
-### 运行
-
-Claude Code / OpenClaw / Cursor / Copilot / Gemini CLI：
-
-```text
-/she-love-me
-```
-
-Codex：
-
-```text
-$she-love-me
-```
-
-也可以直接说一句自然语言，例如：`使用 she-love-me 分析微信聊天记录`。
-
-**就这些。** Skill 会先询问平台（微信 / QQ），然后自动处理一切：
-
-**微信流程：**
-
-```
-调用 she-love-me Skill
-  ↓
-运行 setup_check.py → 自动 clone wechat-decrypt → pip install 依赖
-  ↓
-扫描微信内存 → 提取密钥 → 解密 19 个数据库
-  ↓
-展示联系人列表 → 你选择分析对象
-  ↓
-提取消息 → 统计计算 → AI 深度鉴定
-  ↓
-关系诊断 · 依恋类型 · 危险预警 · 军师建议
-  ↓
-生成 HTML 报告 + 终端摘要
-```
-
-**QQ 流程（v2.2）：**
-
-```
-调用 she-love-me Skill
-  ↓
-输入 QCE Access Token（需提前启动 NapCat + QCE）
-  ↓
-通过 API 获取 QQ 好友列表 → 你选择分析对象
-  ↓
-提取消息 → 统计计算 → AI 深度鉴定
-  ↓
-关系诊断 · 依恋类型 · 危险预警 · 军师建议
-  ↓
-生成 HTML 报告 + 终端摘要
-```
+**就这些。** Skill 会先询问平台（微信 / QQ），然后自动处理一切——解密、提取、分析、生成报告。
 
 ---
 
 ## 工作原理
-
-**微信路径：**
 
 ```
 WeChat（运行中）/ NapCat + QCE（QQ）
@@ -230,25 +159,7 @@ AI Agent 深度分析（全量统计 + 分层采样关键窗口）
 HTML 报告（暗色现代风格）+ Markdown 摘要
 ```
 
-**QQ 路径（v2.2）：**
-
-```
-NapCat + QCE 插件（用户手动启动，扫码登录）
-    │
-    │  REST API：GET /api/friends · POST /api/messages/export
-    ▼
-scripts/extract_messages_qq.py（API 调用 + 格式转换）
-    │
-    │  统一为 messages.json 格式
-    ▼
-scripts/ 统计分析引擎（与微信共用）
-    │
-    │  AI Agent 深度鉴定
-    ▼
-HTML 报告 + Markdown 摘要
-```
-
-**微信解密部分完全依赖 [ylytdeng/wechat-decrypt](https://github.com/ylytdeng/wechat-decrypt)，QQ 导出部分依赖 [shuakami/qq-chat-exporter](https://github.com/shuakami/qq-chat-exporter)，本项目不包含任何解密代码，只调用其公开接口。**
+> 微信解密完全依赖 [ylytdeng/wechat-decrypt](https://github.com/ylytdeng/wechat-decrypt)，QQ 导出依赖 [shuakami/qq-chat-exporter](https://github.com/shuakami/qq-chat-exporter)，本项目不包含任何解密代码。
 
 ---
 
@@ -284,12 +195,11 @@ she-love-me/
 
 ## 支持平台
 
-
-| 平台    | 微信      | QQ      | 备注                                       |
-| ------- | --------- | ------- | ------------------------------------------ |
-| Windows | ✅ 支持   | ✅ 支持 | 微信需要管理员终端；QQ 无需管理员          |
-| macOS   | 🧪 实验性 | ✅ 支持 | 微信依赖上游 wechat-decrypt 与本机权限配置 |
-| Linux   | 🔜 规划中 | ✅ 支持 | QQ 通过 Docker NapCat 部署可用             |
+| 平台 | 微信 | QQ | 备注 |
+|------|------|-----|------|
+| Windows | ✅ 支持 | ✅ 支持 | 微信需要管理员终端；QQ 无需管理员 |
+| macOS | 🧪 实验性 | ✅ 支持 | 微信依赖上游 wechat-decrypt 与本机权限配置 |
+| Linux | 🔜 规划中 | ✅ 支持 | QQ 通过 Docker NapCat 部署可用 |
 
 ---
 
