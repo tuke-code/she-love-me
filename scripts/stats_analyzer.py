@@ -53,7 +53,8 @@ NEGATIVE_EMOTION_WORDS = [
 
 
 def load_messages(path):
-    with open(path, encoding="utf-8") as f:
+    # Accept UTF-8 with or without BOM because Windows editors often save JSON with BOM.
+    with open(path, encoding="utf-8-sig") as f:
         data = json.load(f)
     return data
 

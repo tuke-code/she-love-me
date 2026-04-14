@@ -28,6 +28,39 @@
 
 融入专业心理学框架（依恋类型 · Gottman · Sternberg 三角），支持**危险信号预警**、**军师建议**、**👴 祖师爷寄语**，全程本地运行，数据不上传任何服务器。
 
+> 不想依赖 agent 入口？
+> 可以直接使用传统脚本方案，先导出 `messages.json`，再生成 `analysis_prompt.txt` 交给任意聊天模型：
+> [traditional-deployment/README.md](traditional-deployment/README.md)
+
+---
+
+## 零基础传统方案
+
+如果你是第一次用这个项目，或者你要把这个项目交给没有编程基础的人，建议直接走传统脚本方案。
+
+它的思路非常简单：
+
+1. 下载仓库并解压
+2. 从 **仓库根目录** 打开终端
+3. 安装 Python 和项目依赖
+4. 用脚本导出聊天记录
+5. 生成两份最终文件
+6. 把这两份文件上传给聊天模型
+
+最终只需要交给聊天模型两份文件：
+
+- `messages.json`
+- `analysis_prompt.txt`
+
+适合零基础用户的完整说明在这里：
+
+- [traditional-deployment/README.md](traditional-deployment/README.md)
+
+如果你只看最关键的两点，请先记住：
+
+- 终端一定要在项目根目录 `she-love-me` 里打开
+- 开始前先执行依赖安装命令：`py -m pip install -r requirements.txt`
+
 ---
 
 ## 交流群

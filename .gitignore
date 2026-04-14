@@ -2,6 +2,7 @@
 vendor/
 data/
 reports/
+traditional-deployment/output/
 *.db
 *.json.bak
 all_keys.json
