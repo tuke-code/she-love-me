@@ -57,12 +57,33 @@ If setup returns an error, explain the returned JSON error to the user and guide
 
 If `wechat_running` is `false`, tell the user that WeChat must be opened and logged in before WeChat analysis can continue.
 
-7. If initialization succeeds, continue with the native entry:
+7. If initialization succeeds, handle session reload before invoking the native entry:
+
+- If the repository was cloned in this same session, or the user switched to a new branch after session start, do not invoke the native entry immediately.
+- Explain that repo-level skills are loaded at session start, so the current session may not recognize `she-love-me` yet.
+- Ask the user to start a fresh agent session from the repository root, then continue.
+- Provide a copy-ready command based on platform:
+
+```bash
+# Windows PowerShell
+cd she-love-me
+codex
+```
+
+```bash
+# macOS/Linux
+cd she-love-me
+codex
+```
+
+- After the fresh session starts in repo root, invoke the native entry.
+
+8. In a fresh session (or when the repo was already present at session start), continue with the native entry:
 
 - Codex: `$she-love-me`
 - OpenClaw / Claude Code: `/she-love-me`
 
-Only invoke the native entry after the repository root is active and setup has succeeded.
+Only invoke the native entry after the repository root is active, setup has succeeded, and session reload is complete if required.
 
 ## Notes
 
