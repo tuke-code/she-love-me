@@ -17,6 +17,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DECRYPTOR_DIR = REPO_ROOT / "vendor" / "wechat-decrypt"
+DEFAULT_DECRYPTOR_DIR_DISPLAY = Path("vendor") / "wechat-decrypt"
 DECRYPTOR_REPO = "https://github.com/ylytdeng/wechat-decrypt"
 DEPENDENCIES = ("pycryptodome", "zstandard")
 SUPPORTED_PLATFORMS = {"win32": "Windows", "darwin": "macOS"}
@@ -46,6 +47,13 @@ def detect_platform():
     return SUPPORTED_PLATFORMS.get(sys.platform, sys.platform)
 
 
+def display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def build_notes():
     if sys.platform == "win32":
         return [
@@ -67,7 +75,7 @@ def ensure_runtime_dirs():
     for directory in RUNTIME_DIRS:
         if not directory.exists():
             directory.mkdir(parents=True, exist_ok=True)
-            created.append(str(directory))
+            created.append(display_path(directory))
     return created
 
 
@@ -128,7 +136,7 @@ def main():
     parser.add_argument(
         "--decryptor-dir",
         default=str(DEFAULT_DECRYPTOR_DIR),
-        help="wechat-decrypt 目录",
+        help=f"wechat-decrypt 目录，默认 {DEFAULT_DECRYPTOR_DIR_DISPLAY}",
     )
     args = parser.parse_args()
 
@@ -138,7 +146,7 @@ def main():
         "platform": detect_platform(),
         "python_executable": sys.executable,
         "python_version": ".".join(map(str, sys.version_info[:3])),
-        "decryptor_dir": str(decryptor_dir),
+        "decryptor_dir": display_path(decryptor_dir),
         "decryptor_present": decryptor_dir.exists(),
         "wechat_running": False,
         "wechat_processes": [],

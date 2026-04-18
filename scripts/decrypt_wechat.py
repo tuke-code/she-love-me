@@ -21,7 +21,18 @@ KEYS_FILE = DECRYPTOR_DIR / "all_keys.json"
 
 
 def run_command(cmd, cwd, check=True):
-    result = subprocess.run(cmd, cwd=str(cwd))
+    result = subprocess.run(
+        cmd,
+        cwd=str(cwd),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if result.stdout:
+        print(result.stdout.replace(str(REPO_ROOT), "."), end="")
+    if result.stderr:
+        print(result.stderr.replace(str(REPO_ROOT), "."), end="", file=sys.stderr)
     if check and result.returncode != 0:
         raise RuntimeError(f"命令执行失败: {' '.join(cmd)}")
     return result.returncode
