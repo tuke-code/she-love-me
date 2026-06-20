@@ -67,9 +67,9 @@
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/863401402/she-love-me/main/assets/jiaoliuqun.jpg" width="220" alt="微信交流群" />
+<img src="https://raw.githubusercontent.com/863401402/she-love-me/main/assets/ai-image-group-qr.jpg" width="220" alt="AI图片检测交流群" />
 
-*扫码加入微信交流群，遇到问题、分享鉴定结果、更新优化方向都可以聊*
+*扫码加入AI图片检测交流群，遇到问题、分享鉴定结果、更新优化方向都可以聊*
 
 </div>
 
