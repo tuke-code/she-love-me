@@ -19,6 +19,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DECRYPTOR_DIR = REPO_ROOT / "vendor" / "wechat-decrypt"
 DEFAULT_DECRYPTOR_DIR_DISPLAY = Path("vendor") / "wechat-decrypt"
 DECRYPTOR_REPO = "https://github.com/ylytdeng/wechat-decrypt"
+DECRYPTOR_BLOCKED_HELP = (
+    "上游 ylytdeng/wechat-decrypt 已被 GitHub 因 DMCA 屏蔽（HTTP 451），"
+    "当前无法自动下载。请勿使用来源不明的镜像；可改用 WeFlow JSON、"
+    "Markdown 导出或 QQ Chat Exporter 导入聊天记录。"
+)
 DEPENDENCIES = ("pycryptodome", "zstandard")
 SUPPORTED_PLATFORMS = {"win32": "Windows", "darwin": "macOS"}
 RUNTIME_DIRS = (
@@ -79,20 +84,48 @@ def ensure_runtime_dirs():
     return created
 
 
-def ensure_decryptor(decryptor_dir):
+def decryptor_capabilities(decryptor_dir):
+    return {
+        "default_flow": (decryptor_dir / "main.py").is_file(),
+        "macos_flow": all((decryptor_dir / name).is_file() for name in (
+            "find_all_keys_macos.c", "decrypt_db.py"
+        )),
+    }
+
+
+def ensure_decryptor(decryptor_dir, repo_url=DECRYPTOR_REPO):
     if decryptor_dir.exists():
-        return {"changed": False, "message": "wechat-decrypt 已存在"}
+        capabilities = decryptor_capabilities(decryptor_dir)
+        if not any(capabilities.values()):
+            raise RuntimeError(
+                f"解密器目录 {display_path(decryptor_dir)} 不兼容："
+                "至少需要 main.py，或 macOS 所需的 find_all_keys_macos.c + decrypt_db.py"
+            )
+        return {"changed": False, "message": "兼容解密器已存在", "capabilities": capabilities}
 
     git_path = shutil.which("git")
     if not git_path:
         raise RuntimeError("未找到 git，无法自动 clone wechat-decrypt")
 
     decryptor_dir.parent.mkdir(parents=True, exist_ok=True)
-    result = run_command([git_path, "clone", DECRYPTOR_REPO, str(decryptor_dir)])
+    result = run_command([git_path, "clone", repo_url, str(decryptor_dir)])
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "clone wechat-decrypt 失败")
+        details = result.stderr.strip() or result.stdout.strip()
+        if repo_url == DECRYPTOR_REPO and (
+            "451" in details or "blocked" in details.lower() or "dmca" in details.lower()
+        ):
+            raise RuntimeError(DECRYPTOR_BLOCKED_HELP)
+        raise RuntimeError(f"clone 兼容解密器失败：{details or '未知错误'}")
 
-    return {"changed": True, "message": "已 clone wechat-decrypt"}
+    capabilities = decryptor_capabilities(decryptor_dir)
+    if not any(capabilities.values()):
+        raise RuntimeError("仓库已下载，但未检测到兼容的解密入口")
+    return {
+        "changed": True,
+        "message": "已 clone 兼容解密器",
+        "repository": repo_url,
+        "capabilities": capabilities,
+    }
 
 
 def install_dependencies():
@@ -138,6 +171,11 @@ def main():
         default=str(DEFAULT_DECRYPTOR_DIR),
         help=f"wechat-decrypt 目录，默认 {DEFAULT_DECRYPTOR_DIR_DISPLAY}",
     )
+    parser.add_argument(
+        "--decryptor-repo",
+        default=DECRYPTOR_REPO,
+        help="兼容解密器 Git 仓库 URL；仅使用你信任的来源",
+    )
     args = parser.parse_args()
 
     decryptor_dir = Path(args.decryptor_dir).expanduser().resolve()
@@ -148,6 +186,7 @@ def main():
         "python_version": ".".join(map(str, sys.version_info[:3])),
         "decryptor_dir": display_path(decryptor_dir),
         "decryptor_present": decryptor_dir.exists(),
+        "decryptor_capabilities": decryptor_capabilities(decryptor_dir) if decryptor_dir.exists() else {},
         "wechat_running": False,
         "wechat_processes": [],
         "notes": build_notes(),
@@ -177,8 +216,11 @@ def main():
     try:
         if args.ensure_decryptor:
             if not decryptor_dir.exists():
-                report["actions"].append(ensure_decryptor(decryptor_dir))
+                report["actions"].append(ensure_decryptor(decryptor_dir, args.decryptor_repo))
                 report["decryptor_present"] = True
+                report["decryptor_capabilities"] = decryptor_capabilities(decryptor_dir)
+            else:
+                report["actions"].append(ensure_decryptor(decryptor_dir, args.decryptor_repo))
             report["actions"].append(install_dependencies())
     except RuntimeError as exc:
         report["status"] = "error"

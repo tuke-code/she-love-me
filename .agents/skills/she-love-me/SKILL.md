@@ -33,12 +33,38 @@ description: >-
 
 ## 执行步骤（严格按顺序）
 
-### Step 0: 平台选择
+### Step 0: 数据来源选择
 
-向用户提问并等待回答：「你要分析哪个平台的聊天记录？微信（WeChat）还是 QQ？」
+向用户提问并等待回答：「你的聊天记录来自哪里？微信本机、QQ、WeFlow JSON，还是 Markdown 导出文件？」
 
 - **微信路径** → Step 1 → Step 2 → Step 3 → Step 4 → Step 5 → Step 6
 - **QQ 路径** → Step QQ-1 → Step QQ-2 → Step QQ-3 → Step QQ-4 → Step 6
+- **WeFlow JSON** → Step Import-1 → Step 6
+- **Markdown 文件** → Step Import-2 → Step 6
+
+若本机尚未安装 `vendor/wechat-decrypt/`，需要明确告知用户：上游仓库目前因 DMCA 被 GitHub 屏蔽，无法自动下载。优先建议使用 WeFlow JSON 或 Markdown 导入，不要推荐来源不明的解密器镜像。
+
+若用户已有可信兼容实现，可使用 `setup_check.py --decryptor-repo "<URL>"` 安装，或使用 `decrypt_wechat.py --decryptor-dir "<目录>"` 直接运行。Windows/Linux 兼容入口需提供 `main.py decrypt`；macOS 需提供 `find_all_keys_macos.c` 和 `decrypt_db.py`。
+
+### Step Import-1: 导入 WeFlow JSON
+
+```bash
+<PYTHON> scripts/convert_weflow.py \
+  --input "<WeFlow JSON 文件>" \
+  --output-dir data/contacts
+```
+
+### Step Import-2: 导入 Markdown
+
+支持每行形如 `[2026-08-12 20:10] 张三: 消息内容` 的记录：
+
+```bash
+<PYTHON> scripts/convert_markdown.py \
+  --input "<Markdown 文件>" \
+  --my-name "<记录中你的名字>" \
+  --contact "<联系人名字>" \
+  --output-dir data/contacts
+```
 
 ---
 
@@ -255,6 +281,9 @@ description: >-
 | 微信未运行 | 提示用户打开微信 |
 | 找不到联系人 | 列出相似名字供用户重新选择 |
 | 数据库解密失败 | 检查 `vendor/wechat-decrypt/config.json` 中的 `db_dir` |
+| 自动下载解密器失败 / HTTP 451 | 上游仓库因 DMCA 被 GitHub 屏蔽；改用 WeFlow JSON、Markdown 或 QQ 导入，不使用来源不明镜像 |
+| 毫秒级时间戳 | 导入与统计脚本会自动归一化为秒，无需手工转换 |
+| 语音消息 | 仅在数据源含 `transcript` / `voice_transcript` 时分析转写文本；当前不直接识别音频文件 |
 | messages.json 不存在 | 提示先运行 Step 5 提取消息 |
 | 用户要看表情但 `messages.json` 无 `emoji` 元信息 | 重新运行 Step 5，确认使用的是最新 `scripts/extract_messages.py` |
 | 表情下载失败 | 查看 `<bundle_dir>/emojis_download_manifest.json`；常见原因是 CDN 链接失效或超时 |

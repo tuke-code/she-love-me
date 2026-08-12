@@ -49,6 +49,27 @@ def escape_html(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
+def structured_value(value, fallback="证据不足，暂不判断"):
+    """Render schema values without leaking raw dicts into the report."""
+    if not isinstance(value, dict):
+        return escape_html(value) if value not in (None, "") else escape_html(fallback)
+
+    primary = value.get("value")
+    reason = value.get("reason")
+    evidence_level = value.get("evidence_level")
+    if primary not in (None, ""):
+        text = str(primary)
+        if reason:
+            text += f"（{reason}）"
+    elif reason:
+        text = str(reason)
+    else:
+        text = fallback
+    if evidence_level and evidence_level != "insufficient":
+        text += f" · 证据等级：{evidence_level}"
+    return escape_html(text)
+
+
 def render_danger_warnings(danger_warnings):
     if not danger_warnings:
         return '<p style="color:var(--text-subtle);font-size:13px;">本次鉴定未发现明显危险信号</p>'
@@ -169,12 +190,12 @@ def render_gottman(gottman):
 
 
 def render_personality(personality, contact_name):
-    user_att    = escape_html(personality.get("user_attachment", ""))
-    partner_att = escape_html(personality.get("partner_attachment", ""))
-    user_comm   = escape_html(personality.get("user_communication", ""))
-    partner_comm = escape_html(personality.get("partner_communication", ""))
-    user_lang   = escape_html(personality.get("user_love_language", ""))
-    partner_lang = escape_html(personality.get("partner_love_language", ""))
+    user_att    = structured_value(personality.get("user_attachment"))
+    partner_att = structured_value(personality.get("partner_attachment"))
+    user_comm   = structured_value(personality.get("user_communication"))
+    partner_comm = structured_value(personality.get("partner_communication"))
+    user_lang   = structured_value(personality.get("user_love_language"))
+    partner_lang = structured_value(personality.get("partner_love_language"))
     pursue_dist = personality.get("pursue_distance_cycle", False)
     lang_mismatch = personality.get("love_language_mismatch", False)
 
@@ -595,7 +616,7 @@ def render_patriarch_wisdom(wisdom):
     tactics   = wisdom.get("advance_tactics", [])
     fatal_mistake = wisdom.get("fatal_mistake", "")
     if isinstance(fatal_mistake, dict):
-        mistake = escape_html(fatal_mistake.get("value") or fatal_mistake.get("reason", ""))
+        mistake = structured_value(fatal_mistake)
     else:
         mistake = escape_html(fatal_mistake)
     quote     = escape_html(wisdom.get("closing_quote", ""))
@@ -700,11 +721,11 @@ def render_html(stats, analysis, contact_name):
     --bg: #0a0a0f;
     --surface: #111118;
     --surface-2: #18181f;
-    --border: rgba(255,255,255,0.06);
-    --border-hover: rgba(255,255,255,0.12);
-    --text: #f0f0f5;
-    --text-muted: #6b6b80;
-    --text-subtle: #3a3a4a;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.16);
+    --text: #f5f5fa;
+    --text-muted: #aaaabd;
+    --text-subtle: #7d7d92;
     --accent-1: #a855f7;
     --accent-2: #ec4899;
     --accent-3: #3b82f6;
@@ -744,7 +765,7 @@ def render_html(stats, analysis, contact_name):
     pointer-events: none;
   }}
   .hero-eyebrow {{
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: .15em;
     text-transform: uppercase;
@@ -763,19 +784,19 @@ def render_html(stats, analysis, contact_name):
     margin-bottom: 16px;
   }}
   .hero-contact {{
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 500;
     color: var(--text-muted);
     margin-bottom: 8px;
   }}
   .hero-contact span {{ color: var(--text); font-weight: 700; }}
-  .hero-date {{ font-size: 13px; color: var(--text-subtle); }}
+  .hero-date {{ font-size: 15px; color: var(--text-muted); }}
 
   /* ── Layout ── */
   .container {{ max-width: 960px; margin: 0 auto; padding: 48px 24px 80px; }}
   .section {{ margin-bottom: 64px; }}
   .section-label {{
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: .12em;
     text-transform: uppercase;
@@ -806,8 +827,8 @@ def render_html(stats, analysis, contact_name):
   .score-card.loved::before {{ background: var(--grad-love); }}
   .score-card.cold::before {{ background: var(--grad-cold); }}
   .score-emoji {{ font-size: 24px; margin-bottom: 12px; }}
-  .score-label {{ font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }}
-  .score-value {{ font-size: 56px; font-weight: 900; line-height: 1; letter-spacing: -.04em; }}
+  .score-label {{ font-size: 13px; font-weight: 600; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }}
+  .score-value {{ font-size: 64px; font-weight: 900; line-height: 1; letter-spacing: 0; }}
   .score-card.simp .score-value {{ background: var(--grad-simp); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }}
   .score-card.loved .score-value {{ background: var(--grad-love); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }}
   .score-card.cold .score-value {{ background: var(--grad-cold); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }}
@@ -831,7 +852,7 @@ def render_html(stats, analysis, contact_name):
     align-items: center;
     gap: 14px;
   }}
-  .ingredient-name {{ font-size: 13px; font-weight: 500; color: var(--text-muted); }}
+  .ingredient-name {{ font-size: 14px; font-weight: 600; color: var(--text); }}
   .ingredient-track {{
     height: 6px;
     background: var(--surface-2);
@@ -856,9 +877,9 @@ def render_html(stats, analysis, contact_name):
     transition: border-color .2s;
   }}
   .stat-card:hover {{ border-color: var(--border-hover); }}
-  .stat-meta {{ font-size: 11px; font-weight: 500; color: var(--text-subtle); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 10px; }}
+  .stat-meta {{ font-size: 12px; font-weight: 600; color: var(--text-subtle); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 10px; }}
   .stat-main {{ font-size: 28px; font-weight: 800; letter-spacing: -.02em; line-height: 1; }}
-  .stat-sub {{ font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }}
+  .stat-sub {{ font-size: 13px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }}
 
   /* ── Compare Bars ── */
   .compare-list {{ display: flex; flex-direction: column; gap: 20px; }}
@@ -1190,7 +1211,7 @@ def render_html(stats, analysis, contact_name):
     border-radius: var(--radius);
     padding: 28px;
   }}
-  .chart-title {{ font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 20px; }}
+  .chart-title {{ font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 20px; }}
   .chart-wrap {{ position: relative; height: 180px; }}
   .charts-row {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }}
 
@@ -1375,9 +1396,9 @@ def render_html(stats, analysis, contact_name):
     padding: 16px 12px;
     text-align: center;
   }}
-  .lang-card-label {{ font-size: 10px; font-weight: 600; color: var(--text-subtle); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 8px; }}
+  .lang-card-label {{ font-size: 12px; font-weight: 600; color: var(--text-subtle); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 8px; }}
   .lang-card-val   {{ font-size: 18px; font-weight: 800; margin-bottom: 4px; }}
-  .lang-card-sub   {{ font-size: 10px; color: var(--text-subtle); }}
+  .lang-card-sub   {{ font-size: 12px; color: var(--text-subtle); }}
   .lang-stats-row {{
     display: flex;
     align-items: center;
@@ -1963,8 +1984,8 @@ const base = {{
       backgroundColor: '#18181f',
       borderColor: 'rgba(255,255,255,0.06)',
       borderWidth: 1,
-      titleColor: '#f0f0f5',
-      bodyColor: '#6b6b80',
+      titleColor: '#f5f5fa',
+      bodyColor: '#aaaabd',
       padding: 12,
     }}
   }}
@@ -1987,8 +2008,8 @@ new Chart(document.getElementById('trendChart'), {{
   options: {{
     ...base,
     scales: {{
-      x: {{ ticks: {{ color: '#3a3a4a', maxTicksLimit: 8, font: {{ size: 11 }} }}, grid: {{ color: 'rgba(255,255,255,0.03)' }}, border: {{ display: false }} }},
-      y: {{ ticks: {{ color: '#3a3a4a', font: {{ size: 11 }} }}, grid: {{ color: 'rgba(255,255,255,0.03)' }}, border: {{ display: false }} }}
+      x: {{ ticks: {{ color: '#7d7d92', maxTicksLimit: 8, font: {{ size: 12 }} }}, grid: {{ color: 'rgba(255,255,255,0.04)' }}, border: {{ display: false }} }},
+      y: {{ ticks: {{ color: '#7d7d92', font: {{ size: 12 }} }}, grid: {{ color: 'rgba(255,255,255,0.04)' }}, border: {{ display: false }} }}
     }}
   }}
 }});
@@ -2008,8 +2029,8 @@ new Chart(document.getElementById('hourChart'), {{
   options: {{
     ...base,
     scales: {{
-      x: {{ ticks: {{ color: '#3a3a4a', font: {{ size: 10 }}, maxTicksLimit: 8 }}, grid: {{ display: false }}, border: {{ display: false }} }},
-      y: {{ ticks: {{ color: '#3a3a4a', font: {{ size: 10 }} }}, grid: {{ color: 'rgba(255,255,255,0.03)' }}, border: {{ display: false }} }}
+      x: {{ ticks: {{ color: '#7d7d92', font: {{ size: 12 }}, maxTicksLimit: 8 }}, grid: {{ display: false }}, border: {{ display: false }} }},
+      y: {{ ticks: {{ color: '#7d7d92', font: {{ size: 12 }} }}, grid: {{ color: 'rgba(255,255,255,0.04)' }}, border: {{ display: false }} }}
     }}
   }}
 }});
@@ -2032,7 +2053,7 @@ new Chart(document.getElementById('pieChart'), {{
       legend: {{
         display: true,
         position: 'bottom',
-        labels: {{ color: '#6b6b80', font: {{ size: 11 }}, padding: 16, boxWidth: 10 }}
+        labels: {{ color: '#aaaabd', font: {{ size: 12 }}, padding: 16, boxWidth: 10 }}
       }}
     }},
     cutout: '65%'

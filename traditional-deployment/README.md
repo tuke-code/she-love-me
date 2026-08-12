@@ -276,7 +276,21 @@ py -m pip install -r requirements.txt
 py scripts/setup_check.py --ensure-decryptor
 ```
 
-因为这条命令除了检查环境，还会自动准备 `wechat-decrypt`。
+该命令会检查环境，并尝试准备兼容解密器。原上游仓库已因 DMCA 被 GitHub 屏蔽，自动下载可能返回 HTTP 451。
+
+如果你已有可信的兼容解密器，可以指定本地目录：
+
+```powershell
+py scripts/decrypt_wechat.py --decryptor-dir "D:\path\to\compatible-decryptor"
+```
+
+或者明确指定你信任的兼容仓库：
+
+```powershell
+py scripts/setup_check.py --ensure-decryptor --decryptor-repo "https://example.com/trusted/repo.git"
+```
+
+没有可信解密器时，请使用 README 中的 WeFlow JSON 或 Markdown 导入路径，不要下载来源不明的镜像。
 
 ---
 
@@ -325,6 +339,7 @@ py scripts/setup_check.py --ensure-decryptor
 - 微信没打开
 - 微信没登录
 - 终端不是管理员权限
+- 原解密器上游被 GitHub 屏蔽（HTTP 451）
 
 先把这三个问题排除，再重新运行上一条命令。
 

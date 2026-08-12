@@ -21,6 +21,7 @@ import urllib.request
 import urllib.error
 
 from contact_bundle import resolve_bundle_paths
+from message_normalizer import normalize_timestamp
 
 
 # ─────────────────────────────────────────────────────────
@@ -221,13 +222,24 @@ def convert_messages(qce_messages: list, self_uid: str, contact_display: str) ->
         else:
             content = content_obj.get("text", "")
 
-        converted.append({
+        raw_timestamp = msg.get("timestamp", msg.get("msgTime", msg.get("sendTime", 0)))
+        try:
+            timestamp = normalize_timestamp(raw_timestamp)
+        except ValueError:
+            print(f"[警告] 跳过时间戳无效的第 {i + 1} 条消息: {raw_timestamp!r}", file=sys.stderr)
+            continue
+
+        record = {
             "local_id": i + 1,
             "sender": "me" if is_me else "them",
             "content": content,
-            "timestamp": msg.get("timestamp", 0),
+            "timestamp": timestamp,
             "type": msg_type,
-        })
+        }
+        transcript = content_obj.get("transcript") or content_obj.get("text") if msg_type == "voice" else None
+        if transcript:
+            record["transcript"] = transcript
+        converted.append(record)
 
     return {
         "source": "qq",

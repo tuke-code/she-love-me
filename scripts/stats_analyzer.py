@@ -22,6 +22,8 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+from message_normalizer import analytical_text, normalize_payload
+
 # Windows 控制台 UTF-8 输出
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -60,8 +62,15 @@ def load_messages(path):
 
 
 def filter_text_messages(messages):
-    """只保留文字类型消息用于内容分析"""
-    return [m for m in messages if m["type"] == "text" and m["sender"] in ("me", "them")]
+    """保留文字消息及已经提供转写文本的语音消息。"""
+    result = []
+    for message in messages:
+        content = analytical_text(message)
+        if content and message["sender"] in ("me", "them"):
+            normalized = dict(message)
+            normalized["content"] = content
+            result.append(normalized)
+    return result
 
 
 def detect_conversations(messages):
@@ -400,7 +409,11 @@ def main():
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
-    data = load_messages(args.input)
+    try:
+        data = normalize_payload(load_messages(args.input), drop_invalid=True)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        print(json.dumps({"status": "error", "error": str(exc)}, ensure_ascii=False))
+        sys.exit(1)
     messages = data.get("messages", [])
     contact_display = data.get("contact_display", "对方")
 
@@ -410,6 +423,9 @@ def main():
 
     # 只分析 me/them 的消息
     valid = [m for m in messages if m["sender"] in ("me", "them")]
+    if not valid:
+        print(json.dumps({"error": "没有可分析的 me/them 消息"}, ensure_ascii=False))
+        sys.exit(1)
     text_msgs = filter_text_messages(valid)
 
     my_msgs = [m for m in valid if m["sender"] == "me"]
@@ -506,6 +522,7 @@ def main():
         "daily_trend": daily_trend,
         "message_types": {k: dict(v) for k, v in type_counts.items()},
         "linguistic": linguistics,
+        "data_quality": data.get("normalization", {}),
     }
 
     stats["scores"] = compute_scores(stats)

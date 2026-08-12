@@ -22,6 +22,8 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
+from message_normalizer import analytical_text, normalize_payload
+
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
@@ -50,7 +52,7 @@ def fmt_ts(ts):
 
 
 def is_text(msg):
-    return msg.get("type") == "text" and msg.get("content", "").strip()
+    return bool(analytical_text(msg))
 
 
 def negative_score(text):
@@ -186,7 +188,9 @@ def find_repair_moments(msgs, gap=GAP_THRESHOLD, post_count=20):
 
 def format_msg(m):
     sender = "我" if m.get("sender") == "me" else "TA"
-    return f"[{fmt_ts(m['timestamp'])}] {sender}: {m.get('content', '').strip()}"
+    content = analytical_text(m) or str(m.get("content", "")).strip()
+    prefix = "[语音转写] " if m.get("type") == "voice" and analytical_text(m) else ""
+    return f"[{fmt_ts(m['timestamp'])}] {sender}: {prefix}{content}"
 
 
 def write_window(f, title, msgs):
@@ -209,7 +213,11 @@ def build_generate(data, since_str, output_path):
         print(json.dumps({"error": f"时间范围 {since_str} 之后无消息"}, ensure_ascii=False))
         sys.exit(1)
 
-    text_msgs = [m for m in scoped if is_text(m)]
+    text_msgs = [
+        {**message, "content": analytical_text(message)}
+        for message in scoped
+        if is_text(message)
+    ]
     all_msgs = scoped  # 窗口 4 用全类型（含撤回、语音等也有时间信息）
 
     total = len(scoped)
@@ -303,7 +311,11 @@ def main():
         print(json.dumps({"error": f"找不到 {args.input}，请先运行 extract_messages.py"}, ensure_ascii=False))
         sys.exit(1)
 
-    data = load_messages(args.input)
+    try:
+        data = normalize_payload(load_messages(args.input), drop_invalid=True)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        print(json.dumps({"status": "error", "error": str(exc)}, ensure_ascii=False))
+        sys.exit(1)
 
     if args.preview:
         build_preview(data)

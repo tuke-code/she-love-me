@@ -67,9 +67,9 @@
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/863401402/she-love-me/main/assets/ai-image-group-qr.jpg" width="220" alt="AI图片检测交流群" />
+<img src="https://raw.githubusercontent.com/863401402/she-love-me/main/assets/ai-image-group-qr.jpg" width="220" alt="恋爱分析交流群" />
 
-*扫码加入AI图片检测交流群，遇到问题、分享鉴定结果、更新优化方向都可以聊*
+*扫码加入恋爱分析交流群，遇到问题、分享分析结果、更新优化方向都可以聊*
 
 </div>
 
@@ -103,7 +103,7 @@
 
 | 功能 | 说明 |
 |------|------|
-| 🔓 **自动解密** | 自动 clone 并调用 wechat-decrypt，无需手动操作 |
+| 📥 **多来源导入** | 支持微信已解密数据库、QQ Chat Exporter、WeFlow JSON 和带时间戳 Markdown |
 | 👥 **联系人选择** | 按消息数量排列，选你想分析的那个人 |
 | 📊 **主动指数** | 主动发起占比 · 连续轰炸次数 · 回复速度差 · 消息长度比 |
 | 💜 **被爱指数** | 对方主动次数 · 晚安/早安分析 · 关心频率 |
@@ -123,6 +123,8 @@
 | 😄 **聊天 / 表情分离存储** | `messages.json` 只保留 `emoji_ref`，详细元信息放入独立的 `emojis.json`，结构更简洁 |
 | 🗂️ **按联系人独立目录导出** | 每个联系人自动导出到 `data/contacts/<联系人>__<hash>/`，避免不同对象的数据相互覆盖 |
 | 🖼️ **表情本地下载与预览** | `export_emojis.py` 可批量下载微信表情到联系人目录下的 `emojis_assets/`，并生成 `emojis_preview.html` |
+| 🎙️ **语音转写兼容** | 数据源包含 `transcript` 时自动纳入文字统计与关系分析；暂不直接执行音频转写 |
+| 🕒 **时间戳自动修复** | 自动识别秒、毫秒、微秒、纳秒和常见日期字符串，兼容不同导出工具 |
 | 📄 **双格式输出** | 终端 Markdown 摘要 + 可分享的 HTML 报告 |
 
 ---
@@ -169,6 +171,40 @@ cd she-love-me
 | [Codex](https://developers.openai.com/codex/overview) | `$she-love-me` 或直接说"使用 she-love-me 分析聊天记录" |
 
 **就这些。** Skill 会先询问平台（微信 / QQ），然后自动处理一切——解密、提取、分析、生成报告。
+
+### 已有导出文件
+
+微信本机解密当前受上游依赖可用性影响。已有 WeFlow JSON 时可以直接导入：
+
+```bash
+python scripts/convert_weflow.py --input "weflow.json" --output-dir data/contacts
+```
+
+带时间戳的 Markdown 记录也可以导入：
+
+```bash
+python scripts/convert_markdown.py \
+  --input "chat.md" \
+  --my-name "我在记录中的名字" \
+  --contact "联系人名字" \
+  --output-dir data/contacts
+```
+
+Markdown 支持的基础格式为：`[2026-08-12 20:10] 张三: 消息内容`。转换完成后，继续使用输出 JSON 中的 `messages_path` 和 `bundle_dir`。
+
+如果你已经有可信的兼容解密器目录，可直接接入：
+
+```bash
+python scripts/decrypt_wechat.py --decryptor-dir "<本地兼容解密器目录>"
+```
+
+也可以显式指定可信仓库进行准备：
+
+```bash
+python scripts/setup_check.py --ensure-decryptor --decryptor-repo "<可信仓库 URL>"
+```
+
+兼容接口要求：Windows/Linux 提供 `main.py decrypt`；macOS 提供 `find_all_keys_macos.c` 与 `decrypt_db.py`。
 
 ### 可选：导出微信表情资源
 
@@ -219,7 +255,7 @@ AI Agent 深度分析（全量统计 + 分层采样关键窗口）
 HTML 报告（暗色现代风格）+ Markdown 摘要
 ```
 
-> 微信解密完全依赖 [ylytdeng/wechat-decrypt](https://github.com/ylytdeng/wechat-decrypt)，QQ 导出依赖 [shuakami/qq-chat-exporter](https://github.com/shuakami/qq-chat-exporter)，本项目不包含任何解密代码。
+> 微信解密原本依赖 `ylytdeng/wechat-decrypt`，该上游仓库已于 2026-07-15 因 DMCA 被 GitHub 屏蔽。本项目不会推荐来源不明的镜像；当前建议使用已有解密目录、WeFlow JSON、Markdown 或 QQ Chat Exporter。QQ 导出依赖 [shuakami/qq-chat-exporter](https://github.com/shuakami/qq-chat-exporter)。
 
 ---
 
@@ -243,6 +279,8 @@ she-love-me/
 │   ├── decrypt_wechat.py                      # 微信解密入口
 │   ├── list_contacts.py / list_contacts_qq.py
 │   ├── extract_messages.py / extract_messages_qq.py
+│   ├── convert_weflow.py / convert_markdown.py       # 已有导出文件转换
+│   ├── message_normalizer.py                         # 时间戳与消息结构归一化
 │   ├── contact_bundle.py                      # 统一生成联系人导出目录与各类默认路径
 │   ├── export_emojis.py                       # 读取 emojis.json / 下载本地资源 / 生成预览页
 │   ├── stats_analyzer.py                      # 全量统计分析引擎
@@ -295,7 +333,7 @@ she-love-me/
 
 ## 致谢
 
-> **[ylytdeng/wechat-decrypt](https://github.com/ylytdeng/wechat-decrypt)** — WeChat 4.0 数据库解密器，本项目微信能力的基础 🙏
+> **ylytdeng/wechat-decrypt** — 原 WeChat 4.0 数据库解密器，本项目早期微信能力的基础；其 GitHub 仓库现因 DMCA 屏蔽，链接不再可用。
 
 > **[shuakami/qq-chat-exporter](https://github.com/shuakami/qq-chat-exporter)** — NapCat + QCE 插件，QQ 聊天记录导出方案 🙏
 
