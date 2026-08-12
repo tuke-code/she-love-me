@@ -9,6 +9,11 @@ from contact_bundle import resolve_bundle_paths
 from message_normalizer import normalize_payload
 
 
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
+
 MSG_TYPE_MAP = {
     "文本消息": "text", "动画表情": "emoji", "表情": "emoji",
     "图片消息": "image", "语音消息": "voice", "视频消息": "video",

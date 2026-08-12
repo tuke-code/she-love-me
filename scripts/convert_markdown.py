@@ -10,6 +10,11 @@ from contact_bundle import resolve_bundle_paths
 from message_normalizer import normalize_payload
 
 
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
+
 LINE_PATTERNS = (
     re.compile(r"^\s*[-*]?\s*\[?(?P<time>\d{4}[-/]\d{1,2}[-/]\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)\]?\s+(?P<sender>[^:：]{1,80})[:：]\s*(?P<content>.*)$"),
     re.compile(r"^\s*[-*]?\s*(?P<sender>[^:：]{1,80})[:：]\s*\[?(?P<time>\d{4}[-/]\d{1,2}[-/]\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)\]?\s*(?P<content>.*)$"),
