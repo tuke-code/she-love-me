@@ -1,10 +1,11 @@
 ---
 name: she-love-me
 description: >-
-  Analyze exported WeChat or QQ chat logs to assess relationship dynamics,
-  communication asymmetry, attachment patterns, and risk signals, then generate
-  a structured Chinese relationship analysis HTML report. Use when the user
-  provides chat exports or asks for relationship analysis based on message history.
+  Acquire, import, and analyze WeChat or QQ chat histories, including installing
+  supported exporters, guiding required login or contact selection, converting
+  exports, assessing relationship dynamics and risk signals, and generating a
+  structured Chinese HTML report. Use when the user asks to export, import, or
+  analyze WeChat/QQ chats or requests relationship analysis from message history.
 ---
 
 # 她不一样
@@ -22,12 +23,8 @@ description: >-
 
 1. Python 3.9+
 2. 微信/QQ 处于**运行 + 登录**状态
-3. Windows 需管理员终端；macOS 需终端系统权限
-4. 运行以下命令完成环境初始化（首次运行或排查问题时）：
-   ```bash
-   <PYTHON> scripts/setup_check.py --ensure-decryptor
-   ```
-   该脚本会检查 `vendor/wechat-decrypt/` 是否就绪，若不存在则 clone 并安装依赖。
+3. Windows 微信默认导出路径需要 Node.js 18+ 和管理员终端
+4. 从 GitHub 新 clone 时不要运行 `setup_check.py --ensure-decryptor`：默认上游已被 DMCA 屏蔽
 
 ---
 
@@ -35,84 +32,13 @@ description: >-
 
 ### Step 0: 数据来源选择
 
-向用户提问并等待回答：「你的聊天记录来自哪里？微信本机、QQ、WeFlow JSON，还是 Markdown 导出文件？」
+向用户确认数据来源：「Windows 微信本机、QQ、已有 JSON，还是 Markdown？」
 
-- **微信路径** → Step 1 → Step 2 → Step 3 → Step 4 → Step 5 → Step 6
-- **QQ 路径** → Step QQ-1 → Step QQ-2 → Step QQ-3 → Step QQ-4 → Step 6
-- **WeFlow JSON** → Step Import-1 → Step 6
-- **Markdown 文件** → Step Import-2 → Step 6
+- **Windows 微信本机**：读取并严格执行 `.agents/skills/she-love-me/references/data-sources.md`。Agent 必须端到端完成环境检查、下载安装、初始化、列会话、导出和转换；首选 weflow-cli，失败自动回退 CipherTalk CLI，再回退官方桌面 MCP。仅在登录、管理员授权、桌面账号配置或联系人选择时等待用户。
+- **QQ**：执行下方 QQ 路径。
+- **已有 JSON / Markdown / 兼容解密器**：读取并执行 `data-sources.md` 对应章节。
 
-若本机尚未安装 `vendor/wechat-decrypt/`，需要明确告知用户：上游仓库目前因 DMCA 被 GitHub 屏蔽，无法自动下载。优先建议使用 WeFlow JSON 或 Markdown 导入，不要推荐来源不明的解密器镜像。
-
-若用户已有可信兼容实现，可使用 `setup_check.py --decryptor-repo "<URL>"` 安装，或使用 `decrypt_wechat.py --decryptor-dir "<目录>"` 直接运行。Windows/Linux 兼容入口需提供 `main.py decrypt`；macOS 需提供 `find_all_keys_macos.c` 和 `decrypt_db.py`。
-
-### Step Import-1: 导入 WeFlow JSON
-
-```bash
-<PYTHON> scripts/convert_weflow.py \
-  --input "<WeFlow JSON 文件>" \
-  --output-dir data/contacts
-```
-
-### Step Import-2: 导入 Markdown
-
-支持每行形如 `[2026-08-12 20:10] 张三: 消息内容` 的记录：
-
-```bash
-<PYTHON> scripts/convert_markdown.py \
-  --input "<Markdown 文件>" \
-  --my-name "<记录中你的名字>" \
-  --contact "<联系人名字>" \
-  --output-dir data/contacts
-```
-
----
-
-### ══════════════ 微信路径 ══════════════
-
-### Step 1: 环境检查（微信专用）
-
-优先使用 `python`（Windows）或 `python3`（macOS/Linux），回退到另一个。
-
-```bash
-<PYTHON> scripts/setup_check.py --ensure-decryptor
-```
-
-- 返回非 0：读取 JSON 错误信息并说明原因
-- "请先打开微信并登录" → 停止执行
-- 权限错误 → Windows 提示管理员终端；macOS 提示检查终端权限
-
-### Step 2: 解密微信数据库（微信专用）
-
-```bash
-<PYTHON> scripts/decrypt_wechat.py
-```
-
-- macOS 会自动编译调用 `vendor/wechat-decrypt/find_all_keys_macos.c`
-- 成功后在 `vendor/wechat-decrypt/decrypted/` 生成解密后的 SQLite 文件
-- 失败时读取错误信息并向用户说明原因
-
-### Step 3: 列出联系人（微信专用）
-
-```bash
-<PYTHON> scripts/list_contacts.py --decrypted-dir vendor/wechat-decrypt/decrypted
-```
-
-输出 JSON 格式联系人列表（名字 + 消息数量）。
-
-### Step 4: 用户选择联系人（微信专用）
-
-向用户展示联系人列表（按消息数量排序，只展示前 30 位），等待用户选择：
-「请选择要分析的联系人（输入名字或序号）：」
-
-### Step 5: 提取消息（微信专用）
-
-```bash
-<PYTHON> scripts/extract_messages.py \
-  --decrypted-dir vendor/wechat-decrypt/decrypted \
-  --contact "<用户选择的联系人名字>" \
-  --output data/messages.json
-```
+所有路径完成后必须取得转换器或提取器返回的 `bundle_dir` 和 `messages_path`，再进入 Step 6。不要硬编码 `data/messages.json`，不要把聊天数据移出 `data/`。
 
 ---
 
@@ -150,11 +76,11 @@ description: >-
 <PYTHON> scripts/extract_messages_qq.py \
   --token "$QCE_TOKEN" \
   --contact "<用户选择的联系人名字/QQ号>" \
-  --output data/messages.json
+  --output-dir data/contacts
 ```
 
 找不到联系人 → 建议直接用 QQ 号（纯数字）。
-导出完成后自动转换为统一的 `messages.json` 格式，后续步骤与微信相同。
+导出完成后自动转换为统一的 `messages.json` 格式，并放入联系人独立目录；后续步骤与微信相同。
 
 ---
 
@@ -164,18 +90,18 @@ description: >-
 
 ```bash
 <PYTHON> scripts/stats_analyzer.py \
-  --input data/messages.json \
-  --output data/stats.json
+  --input "<messages_path>" \
+  --output "<bundle_dir>/stats.json"
 ```
 
-读取 `data/stats.json`，获取全量统计数据。
+读取 `<bundle_dir>/stats.json`，获取全量统计数据。
 
 ### Step 6.5: 采样范围选择
 
 **阶段 1：预扫描**，向用户展示时间范围与消息条数，等待选择：
 
 ```bash
-<PYTHON> scripts/build_chat_history.py --input data/messages.json --preview
+<PYTHON> scripts/build_chat_history.py --input "<messages_path>" --preview
 ```
 
 输出 JSON 包含各时间范围的条数和推荐项。向用户展示（格式示例）：
@@ -192,8 +118,8 @@ description: >-
 
 ```bash
 <PYTHON> scripts/build_chat_history.py \
-  --input data/messages.json \
-  --output data/chat_history.txt \
+  --input "<messages_path>" \
+  --output "<bundle_dir>/chat_history.txt" \
   --since <用户选择对应的 date_from>
 ```
 
@@ -202,8 +128,8 @@ description: >-
 ### Step 7: AI 深度鉴定（核心）
 
 读取以下两个文件：
-- `data/stats.json` — **全量统计数据**（消息频率、回复时间、情绪词、语言学特征等）
-- `data/chat_history.txt` — **分层采样的关键窗口**（关系起源 / 高冲突区间 / 最近30天 / 修复时刻）
+- `<bundle_dir>/stats.json` — **全量统计数据**（消息频率、回复时间、情绪词、语言学特征等）
+- `<bundle_dir>/chat_history.txt` — **分层采样的关键窗口**（关系起源 / 高冲突区间 / 最近30天 / 修复时刻）
 
 > 统计层已覆盖全量，叙事分析基于采样窗口 + 统计数据综合判断，不要仅凭窗口内的消息下结论。
 
@@ -211,35 +137,35 @@ description: >-
 
 模块 F 是所有模块的基础——只有真正理解了「这两个人」，才能准确判断「这段关系」。
 
-> 📖 完整分析框架：读取 `references/analysis-framework.md`（模块 F + A + B）
-> 🚨 危险预警定义：读取 `references/risk-signals.md`（模块 C）
-> 🎯 军师与语气风格：读取 `references/strategist-guide.md`（模块 D + E + G）
-> 📋 输出 JSON schema：读取 `references/report-schema.md`
+> 📖 完整分析框架：读取 `.agents/skills/she-love-me/references/analysis-framework.md`（模块 F + A + B）
+> 🚨 危险预警定义：读取 `.agents/skills/she-love-me/references/risk-signals.md`（模块 C）
+> 🎯 军师与语气风格：读取 `.agents/skills/she-love-me/references/strategist-guide.md`（模块 D + E + G）
+> 📋 输出 JSON schema：读取 `.agents/skills/she-love-me/references/report-schema.md`
 
 **5 条执行铁律（不可忽略）**：
 1. **无证据不诊断** — 所有心理学推断必须引用带时间戳的原话作为锚点
-2. **高亮预警优先** — 危险预警仅当量化条件与文本条件同时满足时触发（见 `references/risk-signals.md` 双阈值规则）
+2. **高亮预警优先** — 危险预警仅当量化条件与文本条件同时满足时触发（见 `.agents/skills/she-love-me/references/risk-signals.md` 双阈值规则）
 3. **先叙事，后框架** — 描述鉴定师「看到」的画面，再引入理论名词
 4. **防御语言是金矿** — 「不合适」「随便」「来者不拒」永远追问：这句话保护了什么？想让对方做什么？
 5. **证据不足留白** — 对于 `partner_attachment`、`core_fear`、`trauma_bonding`、`future_faking`、`fatal_mistake`、`advancement_path` 等字段，若无充分证据支撑，输出 `{"value": null, "evidence_level": "insufficient", "reason": "..."}` 而非强行推断
 
-将完整分析结果保存到 `data/analysis.json`。
+将完整分析结果保存到 `<bundle_dir>/analysis.json`。
 
 ### Step 8: 生成报告
 
 ```bash
 <PYTHON> scripts/generate_html_report.py \
-  --stats data/stats.json \
-  --analysis data/analysis.json \
+  --stats "<bundle_dir>/stats.json" \
+  --analysis "<bundle_dir>/analysis.json" \
   --contact "<联系人名字>" \
-  --output reports/
+  --output "<bundle_dir>/reports/"
 ```
 
 ### Step 9: 展示结论
 
 用 Markdown 格式向用户展示鉴定摘要。
 
-> 📋 展示模板：读取 `references/report-template.md`
+> 📋 展示模板：读取 `.agents/skills/she-love-me/references/report-template.md`
 
 ---
 
@@ -252,7 +178,10 @@ description: >-
 | 微信未运行 | 提示用户打开微信 |
 | 找不到联系人 | 列出相似名字供用户重新选择 |
 | 数据库解密失败 | 检查 `vendor/wechat-decrypt/config.json` 中的 `db_dir` |
-| 自动下载解密器失败 / HTTP 451 | 上游仓库因 DMCA 被 GitHub 屏蔽；改用 WeFlow JSON、Markdown 或 QQ 导入，不使用来源不明镜像 |
+| 自动下载解密器失败 / HTTP 451 | 改用 weflow-cli、CipherTalk CLI 或官方桌面 MCP 导出 JSON；WeFlow 仅用于已有旧 JSON，不使用来源不明镜像 |
 | 毫秒级时间戳 | 导入与统计脚本会自动归一化为秒，无需手工转换 |
 | 语音消息 | 仅在数据源含 `transcript` / `voice_transcript` 时分析转写文本；当前不直接识别音频文件 |
 | messages.json 不存在 | 提示先运行 Step 5 提取消息 |
+| 用户要看表情但 `messages.json` 无 `emoji` 元信息 | 重新运行 Step 5，确认使用的是最新 `scripts/extract_messages.py` |
+| 表情下载失败 | 查看 `<bundle_dir>/emojis_download_manifest.json`；常见原因是 CDN 链接失效或超时 |
+| 不同联系人数据互相覆盖 | 必须使用 `--output-dir data/contacts`，并继续沿用 Step 5 返回的 `bundle_dir` |

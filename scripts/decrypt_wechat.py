@@ -39,7 +39,7 @@ def ensure_decryptor_compatible(decryptor_dir, system):
     if not decryptor_dir.exists():
         raise RuntimeError(
             f"未找到解密器目录 {decryptor_dir}。可用 --decryptor-dir 指向已有兼容实现，"
-            "或改用 WeFlow / Markdown 导入。"
+            "或改用 weflow-cli / CipherTalk / Markdown 导入。"
         )
     required = ("find_all_keys_macos.c", "decrypt_db.py") if system == "darwin" else ("main.py",)
     missing = [name for name in required if not (decryptor_dir / name).is_file()]

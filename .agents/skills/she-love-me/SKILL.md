@@ -1,10 +1,11 @@
 ---
 name: she-love-me
 description: >-
-  Analyze exported WeChat or QQ chat logs to assess relationship dynamics,
-  communication asymmetry, attachment patterns, and risk signals, then generate
-  a structured Chinese relationship analysis HTML report. Use when the user
-  provides chat exports or asks for relationship analysis based on message history.
+  Acquire, import, and analyze WeChat or QQ chat histories, including installing
+  supported exporters, guiding required login or contact selection, converting
+  exports, assessing relationship dynamics and risk signals, and generating a
+  structured Chinese HTML report. Use when the user asks to export, import, or
+  analyze WeChat/QQ chats or requests relationship analysis from message history.
 ---
 
 # 她不一样
@@ -22,12 +23,8 @@ description: >-
 
 1. Python 3.9+
 2. 微信/QQ 处于**运行 + 登录**状态
-3. Windows 需管理员终端；macOS 需终端系统权限
-4. 运行以下命令完成环境初始化（首次运行或排查问题时）：
-   ```bash
-   <PYTHON> scripts/setup_check.py --ensure-decryptor
-   ```
-   该脚本会检查 `vendor/wechat-decrypt/` 是否就绪，若不存在则 clone 并安装依赖。
+3. Windows 微信默认导出路径需要 Node.js 18+ 和管理员终端
+4. 从 GitHub 新 clone 时不要运行 `setup_check.py --ensure-decryptor`：默认上游已被 DMCA 屏蔽
 
 ---
 
@@ -35,113 +32,13 @@ description: >-
 
 ### Step 0: 数据来源选择
 
-向用户提问并等待回答：「你的聊天记录来自哪里？微信本机、QQ、WeFlow JSON，还是 Markdown 导出文件？」
+向用户确认数据来源：「Windows 微信本机、QQ、已有 JSON，还是 Markdown？」
 
-- **微信路径** → Step 1 → Step 2 → Step 3 → Step 4 → Step 5 → Step 6
-- **QQ 路径** → Step QQ-1 → Step QQ-2 → Step QQ-3 → Step QQ-4 → Step 6
-- **WeFlow JSON** → Step Import-1 → Step 6
-- **Markdown 文件** → Step Import-2 → Step 6
+- **Windows 微信本机**：读取并严格执行 `.agents/skills/she-love-me/references/data-sources.md`。Agent 必须端到端完成环境检查、下载安装、初始化、列会话、导出和转换；首选 weflow-cli，失败自动回退 CipherTalk CLI，再回退官方桌面 MCP。仅在登录、管理员授权、桌面账号配置或联系人选择时等待用户。
+- **QQ**：执行下方 QQ 路径。
+- **已有 JSON / Markdown / 兼容解密器**：读取并执行 `data-sources.md` 对应章节。
 
-若本机尚未安装 `vendor/wechat-decrypt/`，需要明确告知用户：上游仓库目前因 DMCA 被 GitHub 屏蔽，无法自动下载。优先建议使用 WeFlow JSON 或 Markdown 导入，不要推荐来源不明的解密器镜像。
-
-若用户已有可信兼容实现，可使用 `setup_check.py --decryptor-repo "<URL>"` 安装，或使用 `decrypt_wechat.py --decryptor-dir "<目录>"` 直接运行。Windows/Linux 兼容入口需提供 `main.py decrypt`；macOS 需提供 `find_all_keys_macos.c` 和 `decrypt_db.py`。
-
-### Step Import-1: 导入 WeFlow JSON
-
-```bash
-<PYTHON> scripts/convert_weflow.py \
-  --input "<WeFlow JSON 文件>" \
-  --output-dir data/contacts
-```
-
-### Step Import-2: 导入 Markdown
-
-支持每行形如 `[2026-08-12 20:10] 张三: 消息内容` 的记录：
-
-```bash
-<PYTHON> scripts/convert_markdown.py \
-  --input "<Markdown 文件>" \
-  --my-name "<记录中你的名字>" \
-  --contact "<联系人名字>" \
-  --output-dir data/contacts
-```
-
----
-
-### ══════════════ 微信路径 ══════════════
-
-### Step 1: 环境检查（微信专用）
-
-优先使用 `python`（Windows）或 `python3`（macOS/Linux），回退到另一个。
-
-```bash
-<PYTHON> scripts/setup_check.py --ensure-decryptor
-```
-
-- 返回非 0：读取 JSON 错误信息并说明原因
-- "请先打开微信并登录" → 停止执行
-- 权限错误 → Windows 提示管理员终端；macOS 提示检查终端权限
-
-### Step 2: 解密微信数据库（微信专用）
-
-```bash
-<PYTHON> scripts/decrypt_wechat.py
-```
-
-- macOS 会自动编译调用 `vendor/wechat-decrypt/find_all_keys_macos.c`
-- 成功后在 `vendor/wechat-decrypt/decrypted/` 生成解密后的 SQLite 文件
-- 失败时读取错误信息并向用户说明原因
-
-### Step 3: 列出联系人（微信专用）
-
-```bash
-<PYTHON> scripts/list_contacts.py --decrypted-dir vendor/wechat-decrypt/decrypted
-```
-
-输出 JSON 格式联系人列表（名字 + 消息数量）。
-
-### Step 4: 用户选择联系人（微信专用）
-
-向用户展示联系人列表（按消息数量排序，只展示前 30 位），等待用户选择：
-「请选择要分析的联系人（输入名字或序号）：」
-
-### Step 5: 提取消息（微信专用）
-
-```bash
-<PYTHON> scripts/extract_messages.py \
-  --decrypted-dir vendor/wechat-decrypt/decrypted \
-  --contact "<用户选择的联系人名字>" \
-  --output-dir data/contacts
-```
-
-脚本会自动创建联系人独立目录，例如：
-
-- `data/contacts/<联系人>__<hash>/messages.json`
-- `data/contacts/<联系人>__<hash>/emojis.json`
-
-**重要**：后续 Step 6 及之后的所有输入文件，都应优先使用 Step 5 返回 JSON 中的 `bundle_dir / messages_path / emojis_path`，不要再硬编码写回 `data/messages.json`。
-
-其中：
-
-- `messages.json`：聊天记录主体；表情消息只保留 `emoji_ref`
-- `emojis.json`：独立表情记录；保存 `md5 / cdnurl / len / fromusername / tousername` 等元信息
-
-### Step 5.5: （可选）导出表情资源（微信专用）
-
-仅当用户明确要求查看、导出、下载、整理或预览微信表情时执行。
-
-```bash
-<PYTHON> scripts/export_emojis.py --input "<Step 5 返回的 messages_path>"
-```
-
-默认输出：
-
-- `<bundle_dir>/emojis.json` / `<bundle_dir>/emojis.csv`：表情清单
-- `<bundle_dir>/emojis_assets/`：去重下载后的本地表情资源
-- `<bundle_dir>/emojis_download_manifest.json`：下载结果
-- `<bundle_dir>/emojis_preview.html`：本地浏览器预览页
-
-并会把下载结果写入 `emojis.json`，同时在 `messages.json` 顶层记录 `emoji_export` 信息。
+所有路径完成后必须取得转换器或提取器返回的 `bundle_dir` 和 `messages_path`，再进入 Step 6。不要硬编码 `data/messages.json`，不要把聊天数据移出 `data/`。
 
 ---
 
@@ -281,7 +178,7 @@ description: >-
 | 微信未运行 | 提示用户打开微信 |
 | 找不到联系人 | 列出相似名字供用户重新选择 |
 | 数据库解密失败 | 检查 `vendor/wechat-decrypt/config.json` 中的 `db_dir` |
-| 自动下载解密器失败 / HTTP 451 | 上游仓库因 DMCA 被 GitHub 屏蔽；改用 WeFlow JSON、Markdown 或 QQ 导入，不使用来源不明镜像 |
+| 自动下载解密器失败 / HTTP 451 | 改用 weflow-cli、CipherTalk CLI 或官方桌面 MCP 导出 JSON；WeFlow 仅用于已有旧 JSON，不使用来源不明镜像 |
 | 毫秒级时间戳 | 导入与统计脚本会自动归一化为秒，无需手工转换 |
 | 语音消息 | 仅在数据源含 `transcript` / `voice_transcript` 时分析转写文本；当前不直接识别音频文件 |
 | messages.json 不存在 | 提示先运行 Step 5 提取消息 |

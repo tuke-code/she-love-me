@@ -268,29 +268,9 @@ py -m pip install -r requirements.txt
 
 如果你只分析 QQ，很多情况下即使不装也能跑通，但为了少踩坑，建议统一安装。
 
-### 2.4 微信用户额外建议执行
+### 2.4 微信用户额外准备
 
-如果你是微信用户，后面正式开始前，仍然建议再执行一次：
-
-```powershell
-py scripts/setup_check.py --ensure-decryptor
-```
-
-该命令会检查环境，并尝试准备兼容解密器。原上游仓库已因 DMCA 被 GitHub 屏蔽，自动下载可能返回 HTTP 451。
-
-如果你已有可信的兼容解密器，可以指定本地目录：
-
-```powershell
-py scripts/decrypt_wechat.py --decryptor-dir "D:\path\to\compatible-decryptor"
-```
-
-或者明确指定你信任的兼容仓库：
-
-```powershell
-py scripts/setup_check.py --ensure-decryptor --decryptor-repo "https://example.com/trusted/repo.git"
-```
-
-没有可信解密器时，请使用 README 中的 WeFlow JSON 或 Markdown 导入路径，不要下载来源不明的镜像。
+新用户不要运行 `setup_check.py --ensure-decryptor`：原上游已因 DMCA 被屏蔽。Windows 微信当前使用 weflow-cli，失败时使用 CipherTalk。下面的微信章节会完整说明。
 
 ---
 
@@ -309,123 +289,80 @@ py scripts/setup_check.py --ensure-decryptor --decryptor-repo "https://example.c
 
 ## 微信版：一步一步操作
 
-> 适合：微信 4.0+ 用户  
-> 推荐：Windows 管理员终端
+> 适合：Windows 微信 4.x 用户
+> 需要：管理员终端、Node.js 18+、Python 3.9+；weflow-cli 在当前环境不可用时自动改用 CipherTalk
 
-### 微信版第 1 步：准备环境
-
-先确保：
-
-- 微信已经打开
-- 微信已经登录
-- 你当前终端最好是“管理员身份运行”
-
-然后执行：
+### 微信版第 1 步：检查并安装 weflow-cli
 
 ```powershell
-py scripts/setup_check.py --ensure-decryptor
+py scripts/setup_chat_exporter.py --provider auto --install
 ```
 
-### 成功时你会看到什么
+脚本会通过 npm 安装 weflow-cli，并安装该工具自身的 Python 依赖。输出 JSON 中 `ready` 为 `true` 才继续。
 
-脚本会输出一段 JSON 信息。
+### 微信版第 2 步：初始化本地微信数据
 
-只要里面没有明显的 `error`，并且提示微信正在运行，就可以继续。
-
-### 如果失败了怎么办
-
-最常见原因：
-
-- 微信没打开
-- 微信没登录
-- 终端不是管理员权限
-- 原解密器上游被 GitHub 屏蔽（HTTP 451）
-
-先把这三个问题排除，再重新运行上一条命令。
-
----
-
-### 微信版第 2 步：解密微信数据库
-
-执行：
+先打开并登录微信，再执行：
 
 ```powershell
-py scripts/decrypt_wechat.py
+weflow-cli init
 ```
 
-### 这一步会做什么
+如果提示进程访问失败，请确认当前终端以管理员身份运行。
 
-它会把微信数据库处理成后续脚本可读取的格式。
-
-### 成功后数据会放哪里
-
-通常会在这里生成解密后的数据：
-
-`vendor/wechat-decrypt/decrypted/`
-
----
-
-### 微信版第 3 步：列出联系人
-
-执行：
+### 微信版第 3 步：列出会话
 
 ```powershell
-py scripts/list_contacts.py --decrypted-dir vendor/wechat-decrypt/decrypted
+weflow-cli sessions -n 30
 ```
 
-### 你会看到什么
+记下要分析的联系人显示名和会话 ID（通常是 `wxid_...`）。
 
-你会看到一大段联系人列表，里面有：
-
-- 联系人账号
-- 昵称或备注
-- 消息数量
-
-### 接下来你要做什么
-
-从里面找到你想分析的那个人，把对方的备注名、昵称或者账号记下来。
-
-例如：
-
-- `小王`
-- `张三`
-- `wxid_xxxxx`
-
----
-
-### 微信版第 4 步：导出这个联系人的聊天记录
-
-把下面命令里的 `联系人名字` 改成你刚刚找到的名字。
-
-例如你要分析 `小王`，就写 `小王`。
-
-执行：
+### 微信版第 4 步：导出并转换
 
 ```powershell
-py scripts/extract_messages.py --decrypted-dir vendor/wechat-decrypt/decrypted --contact "联系人名字" --output data/messages.json
+weflow-cli export "<会话 ID>" json --output "data/raw"
+py scripts/convert_weflow_cli.py --input "data/raw/<会话 ID>_messages.json" --contact "<联系人显示名>" --contact-id "<会话 ID>" --output-dir data/contacts
 ```
 
-示例：
+第二条命令会返回 `messages_path`。后续所有命令都把 `<messages_path>` 换成这个实际路径。
+
+### weflow-cli 失败时：CipherTalk
 
 ```powershell
-py scripts/extract_messages.py --decrypted-dir vendor/wechat-decrypt/decrypted --contact "小王" --output data/messages.json
+py scripts/setup_chat_exporter.py --provider ciphertalk --install
+py scripts/diagnose_ciphertalk.py
+py scripts/diagnose_ciphertalk.py --configure
+miyu --format=json --quiet key get --save
+miyu --format=json --quiet --limit=30 sessions
+miyu --format=json --quiet export "<会话 ID>" --output "data/raw/ciphertalk-chat.json"
+py scripts/convert_ciphertalk.py --input "data/raw/ciphertalk-chat.json" --contact "<联系人显示名>" --contact-id "<会话 ID>" --output-dir data/contacts
 ```
 
-### 成功时你会看到什么
+如果诊断发现多个账号，先按输出候选序号执行 `--candidate <序号> --configure`。npm CLI 自动取密钥超时后不要反复登录；直接调用 CipherTalk 官方多进程扫描组件：
 
-通常会出现类似：
-
-```json
-{"status":"ok","total":12345,"contact":"小王"}
+```powershell
+py scripts/diagnose_ciphertalk.py --scan-key --download-scanner
 ```
 
-### 这一步成功后你会得到什么
+组件从 CipherTalk 官方仓库固定 tag 下载并校验，密钥只写入本机 miyu 配置，不输出到终端或 Agent 对话。仅当返回 `database_validated=true`，或限时 `status` 验证返回 `connection.ok=true` 时才继续导出；`scanAccount()` 的未验证候选不能当作端到端成功。
 
-你已经得到最关键的原始输出：
+只有无界面扫描也失败时，才由 Agent 下载并校验官方桌面版作为兼容兜底：
 
-- `data/messages.json`
+```powershell
+py scripts/setup_ciphertalk_desktop.py --download
+```
 
-这份文件就是整理好的聊天记录。
+用户确认安装并在桌面版完成账号配置后，保持主程序运行。Agent 继续通过官方 MCP 列会话和完整导出，不要求用户手工导出：
+
+```powershell
+py scripts/setup_ciphertalk_mcp.py --install
+py scripts/list_ciphertalk_sessions_mcp.py --limit 30
+py scripts/export_ciphertalk_mcp.py --session-id "<会话 ID>" --contact "<联系人>" --output-dir data/raw/ciphertalk-official
+py scripts/convert_ciphertalk.py --input "<导出返回的 output>" --contact "<联系人>" --contact-id "<会话 ID>" --output-dir data/contacts
+```
+
+必须使用官方 `export_chat` 完整导出，不要用 MCP `get_messages` offset 分页拼接全量记录；部分版本会循环返回旧页。用户已经持有可信密钥时，也可在本机执行 `miyu key set`，密钥不得发送给 Agent。
 
 ---
 
@@ -436,7 +373,7 @@ py scripts/extract_messages.py --decrypted-dir vendor/wechat-decrypt/decrypted -
 执行：
 
 ```powershell
-py scripts/stats_analyzer.py --input data/messages.json --output data/stats.json
+py scripts/stats_analyzer.py --input "<messages_path>" --output "<bundle_dir>/stats.json"
 ```
 
 ### 为什么建议做这一步
@@ -457,7 +394,7 @@ py scripts/stats_analyzer.py --input data/messages.json --output data/stats.json
 执行：
 
 ```powershell
-py traditional-deployment/build_llm_package.py --messages data/messages.json --stats data/stats.json
+py traditional-deployment/build_llm_package.py --messages "<messages_path>" --stats "<bundle_dir>/stats.json"
 ```
 
 ### 成功时你会看到什么
@@ -630,12 +567,13 @@ py traditional-deployment/build_llm_package.py --messages data/messages.json --s
 ### 微信用户最常用
 
 ```powershell
-py scripts/setup_check.py --ensure-decryptor
-py scripts/decrypt_wechat.py
-py scripts/list_contacts.py --decrypted-dir vendor/wechat-decrypt/decrypted
-py scripts/extract_messages.py --decrypted-dir vendor/wechat-decrypt/decrypted --contact "联系人名字" --output data/messages.json
-py scripts/stats_analyzer.py --input data/messages.json --output data/stats.json
-py traditional-deployment/build_llm_package.py --messages data/messages.json --stats data/stats.json
+py scripts/setup_chat_exporter.py --provider auto --install
+weflow-cli init
+weflow-cli sessions -n 30
+weflow-cli export "<会话 ID>" json --output "data/raw"
+py scripts/convert_weflow_cli.py --input "data/raw/<会话 ID>_messages.json" --contact "<联系人>" --contact-id "<会话 ID>" --output-dir data/contacts
+py scripts/stats_analyzer.py --input "<messages_path>" --output "<bundle_dir>/stats.json"
+py traditional-deployment/build_llm_package.py --messages "<messages_path>" --stats "<bundle_dir>/stats.json"
 ```
 
 ### QQ用户最常用

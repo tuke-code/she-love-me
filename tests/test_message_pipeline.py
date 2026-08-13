@@ -11,7 +11,9 @@ SCRIPTS_DIR = REPO_ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 from convert_markdown import parse_markdown
+from convert_ciphertalk import convert_payload as convert_ciphertalk_payload
 from convert_weflow import convert_payload
+from convert_weflow_cli import convert_payload as convert_weflow_cli_payload
 from generate_html_report import render_personality
 from message_normalizer import analytical_text, normalize_payload, normalize_timestamp
 from setup_check import decryptor_capabilities
@@ -80,6 +82,84 @@ class ImportTests(unittest.TestCase):
         self.assertEqual(payload["messages"], [])
         self.assertEqual(emojis, {})
 
+    def test_weflow_cli_imports_top_level_array(self):
+        payload = normalize_payload(convert_weflow_cli_payload([{
+            "localId": 7,
+            "localType": 1,
+            "createTime": 1692946166000,
+            "isSend": 1,
+            "senderUsername": "wxid_me",
+            "parsedContent": "早点休息",
+        }], "小王", "wxid_friend"), drop_invalid=True)
+        self.assertEqual(payload["source"], "weflow-cli")
+        self.assertEqual(payload["messages"][0]["sender"], "me")
+        self.assertEqual(payload["messages"][0]["content"], "早点休息")
+        self.assertEqual(payload["messages"][0]["timestamp"], 1692946166)
+
+    def test_weflow_cli_infers_incoming_from_contact_id(self):
+        payload = normalize_payload(convert_weflow_cli_payload([{
+            "localId": 9,
+            "localType": 1,
+            "createTime": 1692946168,
+            "isSend": None,
+            "senderUsername": "wxid_friend",
+            "parsedContent": "在的",
+        }], "小王", "wxid_friend"), drop_invalid=True)
+        self.assertEqual(payload["messages"][0]["sender"], "them")
+
+    def test_weflow_cli_drops_unresolvable_direction_with_warning(self):
+        payload = normalize_payload(convert_weflow_cli_payload([{
+            "localId": 10,
+            "localType": 1,
+            "createTime": 1692946169,
+            "isSend": None,
+            "senderUsername": "unknown",
+            "parsedContent": "方向未知",
+        }], "小王", "wxid_friend"), drop_invalid=True)
+        self.assertEqual(payload["messages"], [])
+        self.assertEqual(payload["normalization"]["dropped_messages"], 1)
+
+    def test_ciphertalk_imports_wrapped_messages(self):
+        payload = normalize_payload(convert_ciphertalk_payload({"messages": [{
+            "localId": 8,
+            "createTime": 1692946167,
+            "direction": "in",
+            "senderUsername": "wxid_friend",
+            "type": 34,
+            "content": "",
+            "transcript": "你也早点休息",
+        }]}, "小王", "wxid_friend"), drop_invalid=True)
+        message = payload["messages"][0]
+        self.assertEqual(payload["source"], "ciphertalk")
+        self.assertEqual(message["sender"], "them")
+        self.assertEqual(message["type"], "voice")
+        self.assertEqual(message["content"], "[语音消息]")
+        self.assertEqual(analytical_text(message), "你也早点休息")
+
+    def test_ciphertalk_desktop_detailed_json(self):
+        payload = normalize_payload(convert_ciphertalk_payload({"messages": [{
+            "localId": 9,
+            "createTime": 1692946168,
+            "isSend": 1,
+            "senderUsername": "wxid_me",
+            "localType": 1,
+            "content": "桌面版导出",
+        }]}, "小王", "wxid_friend"), drop_invalid=True)
+        self.assertEqual(payload["messages"][0]["sender"], "me")
+        self.assertEqual(payload["messages"][0]["type"], "text")
+
+    def test_ciphertalk_desktop_chatlab_json(self):
+        payload = normalize_payload(convert_ciphertalk_payload({
+            "meta": {"ownerId": "wxid_me"},
+            "messages": [{
+                "timestamp": 1692946169,
+                "sender": "wxid_friend",
+                "type": 0,
+                "content": "ChatLab 导出",
+            }],
+        }, "小王", "wxid_friend"), drop_invalid=True)
+        self.assertEqual(payload["messages"][0]["sender"], "them")
+
 
 class ReportRenderingTests(unittest.TestCase):
     def test_personality_structured_fields_do_not_leak_dict_repr(self):
@@ -112,6 +192,50 @@ class DecryptorCompatibilityTests(unittest.TestCase):
 
 
 class EndToEndTests(unittest.TestCase):
+    def test_weflow_cli_json_to_bundle(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "weflow-cli.json"
+            source.write_text(json.dumps([{
+                "localId": 1, "localType": 1, "createTime": 1692946166,
+                "isSend": 1, "senderUsername": "wxid_me", "parsedContent": "你好",
+            }, {
+                "localId": 2, "localType": 1, "createTime": 1692946167,
+                "isSend": 0, "senderUsername": "wxid_friend", "parsedContent": "你好呀",
+            }], ensure_ascii=False), encoding="utf-8")
+            contacts = root / "contacts"
+            result = subprocess.run([
+                sys.executable, str(SCRIPTS_DIR / "convert_weflow_cli.py"),
+                "--input", str(source), "--contact", "小王",
+                "--contact-id", "wxid_friend", "--output-dir", str(contacts),
+            ], check=True, capture_output=True, text=True, encoding="utf-8")
+            output = json.loads(result.stdout)
+            payload = json.loads(Path(output["messages_path"]).read_text(encoding="utf-8"))
+            self.assertEqual(output["total"], 2)
+            self.assertEqual([item["sender"] for item in payload["messages"]], ["me", "them"])
+
+    def test_ciphertalk_json_to_bundle(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "ciphertalk.json"
+            source.write_text(json.dumps([{
+                "localId": 1, "createTime": 1692946166,
+                "direction": "out", "type": 1, "content": "你好",
+            }, {
+                "localId": 2, "createTime": 1692946167,
+                "direction": "in", "type": 1, "content": "你好呀",
+            }], ensure_ascii=False), encoding="utf-8")
+            contacts = root / "contacts"
+            result = subprocess.run([
+                sys.executable, str(SCRIPTS_DIR / "convert_ciphertalk.py"),
+                "--input", str(source), "--contact", "小王",
+                "--contact-id", "wxid_friend", "--output-dir", str(contacts),
+            ], check=True, capture_output=True, text=True, encoding="utf-8")
+            output = json.loads(result.stdout)
+            payload = json.loads(Path(output["messages_path"]).read_text(encoding="utf-8"))
+            self.assertEqual(output["total"], 2)
+            self.assertEqual([item["sender"] for item in payload["messages"]], ["me", "them"])
+
     def test_markdown_to_report_pipeline(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

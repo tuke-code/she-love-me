@@ -24,7 +24,7 @@
 
 **她不一样** 是一个**通用 Agent Skill**，支持 Claude Code、Codex、Cursor、GitHub Copilot、Gemini CLI 等主流 AI 编程工具。
 
-只需要一句调用指令（例如 Claude 里输入 `/she-love-me`，Codex 里输入 `$she-love-me`），它就能自动解密你的微信数据库（或通过 QCE 提取 QQ 记录）、分析你和某个联系人的全部聊天记录，帮你看清：**她是不是真的不一样——这段感情里，你们到底是什么关系？**
+只需要一句调用指令（例如 Claude 里输入 `/she-love-me`，Codex 里输入 `$she-love-me`），它就能引导你导入微信或 QQ 聊天记录、分析你和某个联系人的全部聊天记录，帮你看清：**她是不是真的不一样——这段感情里，你们到底是什么关系？**
 
 融入专业心理学框架（依恋类型 · Gottman · Sternberg 三角），支持**危险信号预警**、**军师建议**、**👴 祖师爷寄语**，全程本地运行，数据不上传任何服务器。
 
@@ -103,7 +103,7 @@
 
 | 功能 | 说明 |
 |------|------|
-| 📥 **多来源导入** | 支持微信已解密数据库、QQ Chat Exporter、WeFlow JSON 和带时间戳 Markdown |
+| 📥 **多来源导入** | 支持 weflow-cli、CipherTalk、QQ Chat Exporter、旧 WeFlow JSON 和带时间戳 Markdown |
 | 👥 **联系人选择** | 按消息数量排列，选你想分析的那个人 |
 | 📊 **主动指数** | 主动发起占比 · 连续轰炸次数 · 回复速度差 · 消息长度比 |
 | 💜 **被爱指数** | 对方主动次数 · 晚安/早安分析 · 关心频率 |
@@ -150,9 +150,9 @@ $ curl -s https://raw.githubusercontent.com/863401402/she-love-me/main/GUIDE.md
 ### 前置条件
 
 **微信分析**：
-- Windows / macOS + WeChat 4.0+（**必须处于登录运行状态**）
-- Windows 需要使用**管理员终端**
-- macOS 请确保终端具备必要系统权限，并按上游解密器提示授权
+- 默认路径为 Windows + WeChat 4.x，并使用管理员终端
+- Node.js 18+；安装器会优先尝试 `weflow-cli`，当前环境不兼容时自动改用 CipherTalk
+- Agent 会代用户检查、下载安装并运行第三方导出工具；用户只需处理登录、权限批准和联系人选择
 
 **QQ 分析**：
 - 安装并启动 [QQ Chat Exporter (QCE)](https://github.com/shuakami/qq-chat-exporter)（NapCat + QCE 插件）
@@ -170,41 +170,102 @@ cd she-love-me
 | [Claude Code](https://claude.ai/code) / [OpenClaw](https://openclaw.ai) / [Cursor](https://cursor.sh) / [Copilot](https://github.com/features/copilot) / [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `/she-love-me` |
 | [Codex](https://developers.openai.com/codex/overview) | `$she-love-me` 或直接说"使用 she-love-me 分析聊天记录" |
 
-**就这些。** Skill 会先询问平台（微信 / QQ），然后自动处理一切——解密、提取、分析、生成报告。
+Skill 会先询问数据来源，再引导导出或导入、统计分析并生成报告。
 
-### 已有导出文件
+各 Agent 都路由到同一份 `.agents/skills/she-love-me/SKILL.md`：Codex/Cursor 读取 `AGENTS.md`，Claude Code 由 `.claude/settings.json` 注册，Copilot 使用 `.github/copilot-instructions.md`，Gemini CLI 使用 `GEMINI.md`，OpenAI/Codex 的技能元数据位于 `agents/openai.yaml`。
 
-微信本机解密当前受上游依赖可用性影响。已有 WeFlow JSON 时可以直接导入：
+### Windows 微信：首选 weflow-cli
+
+从 GitHub 新 clone 时，不再尝试下载已被屏蔽的 `wechat-decrypt`。Skill 会自动执行 [weflow-cli](https://github.com/zhuobichen/weflow-cli) / CipherTalk 的检查、安装与初始化流程（Agent 平台要求时会请求联网/安装授权）：
+
+```powershell
+py scripts/setup_chat_exporter.py --provider auto --install
+weflow-cli init
+weflow-cli sessions
+weflow-cli export "<联系人或 wxid>" json --output ".\data\raw"
+```
+
+把实际生成的 `<wxid>_messages.json` 转成项目统一格式：
+
+```powershell
+py scripts/convert_weflow_cli.py `
+  --input ".\data\raw\<wxid>_messages.json" `
+  --contact "<联系人显示名>" `
+  --contact-id "<wxid>" `
+  --output-dir data/contacts
+```
+
+通常无需手工执行上面的命令；它们用于说明 Agent 实际完成的步骤。`weflow-cli` 是当前可用的第三方项目，但不属于本仓库，也未经过本仓库的独立安全审计；微信版本升级或上游状态变化可能影响可用性。
+
+### 备选：CipherTalk CLI
+
+```powershell
+npm install -g ciphertalk-cli
+py scripts/diagnose_ciphertalk.py
+py scripts/diagnose_ciphertalk.py --configure
+miyu --format=json --quiet key get --save
+miyu --format=json --quiet --limit=30 sessions
+miyu --format=json --quiet export "<会话 ID>" --output ".\data\raw\chat.json"
+py scripts/convert_ciphertalk.py `
+  --input ".\data\raw\chat.json" `
+  --contact "<联系人显示名>" `
+  --contact-id "<会话 ID>" `
+  --output-dir data/contacts
+```
+
+`diagnose_ciphertalk.py` 会寻找有效账号目录并检查配置是否完整，但绝不输出数据库密钥。若 npm CLI 自动取密钥超时，不要反复重新登录：使用本项目的无界面适配器调用 CipherTalk 官方多进程扫描函数：
+
+```powershell
+py scripts/diagnose_ciphertalk.py --scan-key --download-scanner
+```
+
+该命令只从 `ILoveBingLu/CipherTalk` 固定官方 tag 下载约 468 KB 的 `wechat_key_tool.dll` 和匹配服务源码，校验固定 SHA-256 后运行；密钥直接写入本机 miyu 配置，不进入标准输出。只有返回 `database_validated=true`，或 `run_ciphertalk_cli.py --timeout 60 -- status` 返回 `connection.ok=true` 后，Agent 才继续列会话和导出。`scanAccount()` 返回的未验证候选不能当作端到端成功。
+
+只有无界面扫描也失败时，才下载官方桌面版作为最终兼容兜底：
+
+```powershell
+py scripts/setup_ciphertalk_desktop.py --download
+```
+
+用户在桌面版完成账号配置、主界面能够查看会话后，Agent 会继续使用桌面版官方 MCP，不需要用户手工逐个导出：
+
+```powershell
+py scripts/setup_ciphertalk_mcp.py --install
+py scripts/list_ciphertalk_sessions_mcp.py --limit 30
+py scripts/export_ciphertalk_mcp.py `
+  --session-id "<会话 ID>" `
+  --contact "<联系人显示名>" `
+  --output-dir data/raw/ciphertalk-official
+py scripts/convert_ciphertalk.py `
+  --input "<export_ciphertalk_mcp.py 返回的 output>" `
+  --contact "<联系人显示名>" `
+  --contact-id "<会话 ID>" `
+  --output-dir data/contacts
+```
+
+`setup_ciphertalk_mcp.py` 只在 `scripts/tmp/` 安装桌面启动器遗漏的固定版本 MCP SDK，该目录不会提交。完整聊天必须通过官方 `export_chat` 导出；不要用 `get_messages` 的 offset 分页拼接全量数据，部分版本会循环返回旧页并污染统计。桌面版 detailed-json / ChatLab JSON 仍可直接交给 `convert_ciphertalk.py`。
+
+### 其他已有导出文件
+
+旧版 WeFlow JSON 仍可导入，但 WeFlow 官方核心源码和 Release 已移除，不再推荐新用户安装：
 
 ```bash
 python scripts/convert_weflow.py --input "weflow.json" --output-dir data/contacts
 ```
 
-带时间戳的 Markdown 记录也可以导入：
+带时间戳的 Markdown 也可以导入：
 
 ```bash
-python scripts/convert_markdown.py \
-  --input "chat.md" \
-  --my-name "我在记录中的名字" \
-  --contact "联系人名字" \
-  --output-dir data/contacts
+python scripts/convert_markdown.py --input "chat.md" --my-name "我" --contact "联系人" --output-dir data/contacts
 ```
 
-Markdown 支持的基础格式为：`[2026-08-12 20:10] 张三: 消息内容`。转换完成后，继续使用输出 JSON 中的 `messages_path` 和 `bundle_dir`。
+Markdown 基础格式：`[2026-08-12 20:10] 张三: 消息内容`。转换完成后，沿用返回 JSON 中的 `messages_path` 和 `bundle_dir`。
 
-如果你已经有可信的兼容解密器目录，可直接接入：
+如果你已经有可信的兼容解密器目录，旧版入口仍可使用：
 
 ```bash
 python scripts/decrypt_wechat.py --decryptor-dir "<本地兼容解密器目录>"
 ```
-
-也可以显式指定可信仓库进行准备：
-
-```bash
-python scripts/setup_check.py --ensure-decryptor --decryptor-repo "<可信仓库 URL>"
-```
-
-兼容接口要求：Windows/Linux 提供 `main.py decrypt`；macOS 提供 `find_all_keys_macos.c` 与 `decrypt_db.py`。
 
 ### 可选：导出微信表情资源
 
@@ -235,9 +296,9 @@ python scripts/export_emojis.py \
 ## 工作原理
 
 ```
-WeChat（运行中）/ NapCat + QCE（QQ）
+weflow-cli / CipherTalk / 旧导出文件 / NapCat + QCE（QQ）
     │
-    │  微信：内存扫描提取密钥 → wechat-decrypt 解密数据库
+    │  微信：第三方工具导出 JSON → 本项目转换器
     │  QQ：REST API 导出聊天记录
     ▼
 标准 SQLite / JSON 消息数据
@@ -255,7 +316,7 @@ AI Agent 深度分析（全量统计 + 分层采样关键窗口）
 HTML 报告（暗色现代风格）+ Markdown 摘要
 ```
 
-> 微信解密原本依赖 `ylytdeng/wechat-decrypt`，该上游仓库已于 2026-07-15 因 DMCA 被 GitHub 屏蔽。本项目不会推荐来源不明的镜像；当前建议使用已有解密目录、WeFlow JSON、Markdown 或 QQ Chat Exporter。QQ 导出依赖 [shuakami/qq-chat-exporter](https://github.com/shuakami/qq-chat-exporter)。
+> 微信解密原本依赖 `ylytdeng/wechat-decrypt`，该上游仓库已于 2026-07-15 因 DMCA 被 GitHub 屏蔽；WeFlow 官方核心源码和 Release 也已移除。本项目不会推荐来源不明的镜像。Windows 微信当前首选 weflow-cli JSON，备选 CipherTalk JSON；QQ 依赖 [shuakami/qq-chat-exporter](https://github.com/shuakami/qq-chat-exporter)。
 
 ---
 
@@ -276,10 +337,15 @@ she-love-me/
 ├── references/tong-jincheng/                  # 祖师爷心智模型参考材料
 ├── scripts/
 │   ├── setup_check.py                         # 环境检查 / 依赖准备
+│   ├── setup_chat_exporter.py                 # 检查/安装 weflow-cli 或 CipherTalk
+│   ├── setup_ciphertalk_mcp.py                 # 准备官方桌面 MCP 运行依赖
+│   ├── list_ciphertalk_sessions_mcp.py         # 安全列出桌面版会话
+│   ├── export_ciphertalk_mcp.py                # 通过官方 export_chat 完整导出
 │   ├── decrypt_wechat.py                      # 微信解密入口
 │   ├── list_contacts.py / list_contacts_qq.py
 │   ├── extract_messages.py / extract_messages_qq.py
-│   ├── convert_weflow.py / convert_markdown.py       # 已有导出文件转换
+│   ├── convert_weflow_cli.py / convert_ciphertalk.py # 当前微信 JSON 转换
+│   ├── convert_weflow.py / convert_markdown.py       # 旧 WeFlow / Markdown 转换
 │   ├── message_normalizer.py                         # 时间戳与消息结构归一化
 │   ├── contact_bundle.py                      # 统一生成联系人导出目录与各类默认路径
 │   ├── export_emojis.py                       # 读取 emojis.json / 下载本地资源 / 生成预览页
@@ -298,8 +364,8 @@ she-love-me/
 
 | 平台 | 微信 | QQ | 备注 |
 |------|------|-----|------|
-| Windows | ✅ 支持 | ✅ 支持 | 微信需要管理员终端；QQ 无需管理员 |
-| macOS | 🧪 实验性 | ✅ 支持 | 微信依赖上游 wechat-decrypt 与本机权限配置 |
+| Windows | ✅ 支持 | ✅ 支持 | 微信首选 weflow-cli；QQ 无需管理员 |
+| macOS | 📄 导入 | ✅ 支持 | 可导入已有 JSON/Markdown；不提供默认本机提取工具 |
 | Linux | 🔜 规划中 | ✅ 支持 | QQ 通过 Docker NapCat 部署可用 |
 
 ---
@@ -334,6 +400,8 @@ she-love-me/
 ## 致谢
 
 > **ylytdeng/wechat-decrypt** — 原 WeChat 4.0 数据库解密器，本项目早期微信能力的基础；其 GitHub 仓库现因 DMCA 屏蔽，链接不再可用。
+
+> **[zhuobichen/weflow-cli](https://github.com/zhuobichen/weflow-cli)** / **[ILoveBingLu/CipherTalk](https://github.com/ILoveBingLu/CipherTalk)** — 当前 Windows 微信第三方导出入口；Agent 会代用户安装、运行并转换导出结果。
 
 > **[shuakami/qq-chat-exporter](https://github.com/shuakami/qq-chat-exporter)** — NapCat + QCE 插件，QQ 聊天记录导出方案 🙏
 

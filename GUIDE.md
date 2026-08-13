@@ -39,23 +39,15 @@ If any of these files are missing, stop and report that the repository is incomp
 - `.claude/skills/she-love-me/SKILL.md`
 - `.claude/settings.json`
 
-5. Initialize the environment:
+5. Install the repository's Python dependencies:
 
 ```bash
-python scripts/setup_check.py --ensure-decryptor
+python -m pip install -r requirements.txt
 ```
 
 > On macOS, use `python3` instead of `python`.
 
-6. Read the JSON result from the setup script and only continue if all of the following are true:
-
-- `status` is `ok`
-- `decryptor_present` is `true`
-- there is no `error` field
-
-If setup returns an error, explain the returned JSON error to the user and guide them to retry after fixing it.
-
-If `wechat_running` is `false`, tell the user that WeChat must be opened and logged in before WeChat analysis can continue.
+6. For a new Windows WeChat user, follow the native skill's `weflow-cli` JSON path. Do not run `setup_check.py --ensure-decryptor`: the former default decryptor is unavailable due to DMCA. CipherTalk JSON is the fallback; old WeFlow JSON remains import-only.
 
 7. If initialization succeeds, handle session reload before invoking the native entry:
 
@@ -83,7 +75,7 @@ codex
 - Codex: `$she-love-me`
 - OpenClaw / Claude Code: `/she-love-me`
 
-Only invoke the native entry after the repository root is active, setup has succeeded, and session reload is complete if required.
+Only invoke the native entry after the repository root is active, dependencies are installed, and session reload is complete if required.
 
 ## Notes
 

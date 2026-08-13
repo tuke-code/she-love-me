@@ -21,8 +21,8 @@ DEFAULT_DECRYPTOR_DIR_DISPLAY = Path("vendor") / "wechat-decrypt"
 DECRYPTOR_REPO = "https://github.com/ylytdeng/wechat-decrypt"
 DECRYPTOR_BLOCKED_HELP = (
     "上游 ylytdeng/wechat-decrypt 已被 GitHub 因 DMCA 屏蔽（HTTP 451），"
-    "当前无法自动下载。请勿使用来源不明的镜像；可改用 WeFlow JSON、"
-    "Markdown 导出或 QQ Chat Exporter 导入聊天记录。"
+    "当前无法自动下载。请勿使用来源不明的镜像；Windows 微信可改用 "
+    "weflow-cli 或 CipherTalk 导出 JSON，已有旧 WeFlow JSON 也可继续导入。"
 )
 DEPENDENCIES = ("pycryptodome", "zstandard")
 SUPPORTED_PLATFORMS = {"win32": "Windows", "darwin": "macOS"}
