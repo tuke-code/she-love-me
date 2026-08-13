@@ -34,6 +34,7 @@ class CipherTalkMcpClientTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             ciphertalk_mcp_client.find_launcher("missing-ciphertalk-mcp.cmd")
 
+    @unittest.skipUnless(sys.platform == "win32", "Windows registry path behavior")
     def test_registry_command_path_parsing(self):
         path = ciphertalk_mcp_client.executable_from_registry_value(
             '"X:\\Apps\\CipherTalk\\Uninstall CipherTalk.exe" /currentuser'
